@@ -1,0 +1,300 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Deploys a Microsoft SQL database to an existing VPC on a private subnet.",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Network Configuration"
+                    },
+                    "Parameters": [
+                        "PrivateSubnet01ID",
+                        "PrivateSubnet02ID",
+                        "VpcCidrBlock",
+                        "VpcId"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "TPP Database Setup"
+                    },
+                    "Parameters": [
+                        "DBAllocatedStorage",
+                        "DBInstanceClass",
+                        "DBMasterUsername",
+                        "DBMasterUserPassword",
+                        "DBMasterUserPasswordConfirm",
+                        "DBSnapshotID"
+                    ]
+                }
+            ],
+            "ParameterLabels": {
+                "PrivateSubnet01ID": {
+                    "default": "Private CIDR Block 1 ID: "
+                },
+                "PrivateSubnet02ID": {
+                    "default": "Private CIDR Block 2 ID: "
+                },
+                "VpcCidrBlock": {
+                    "default": "CIDR block of your VPC: "
+                },
+                "VpcId": {
+                    "default": "ID of VPC: "
+                },
+                "DBAllocatedStorage": {
+                    "default": "Size of Microsoft SQL server: "
+                },
+                "DBInstanceClass": {
+                    "default": "Microsoft SQL server class type: "
+                },
+                "DBMasterUsername": {
+                    "default": "DBMasterUsername: "
+                },
+                "DBMasterUserPassword": {
+                    "default": "DBMasterPassword: "
+                },
+                "DBMasterUserPasswordConfirm": {
+                    "default": "DBMasterPassword (Confirm): "
+                },
+                "DBSnapshotID": {
+                    "default": "Snapshot ID: "
+                }
+            }
+        }
+    },
+    "Parameters": {
+        "PrivateSubnet01ID": {
+            "Description": "ID of private subnet 1.",
+            "Type": "AWS::EC2::Subnet::Id"
+        },
+        "PrivateSubnet02ID": {
+            "Description": "ID of private subnet 2.",
+            "Type": "AWS::EC2::Subnet::Id"
+        },
+        "VpcCidrBlock": {
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "Description": "CIDR Block of your VPC.",
+            "Type": "String",
+            "MaxLength":"18",
+            "MinLength": "9"
+        },
+        "VpcId": {
+            "Description": "ID of your existing VPC.",
+            "Type": "AWS::EC2::VPC::Id"
+        },
+        "DBAllocatedStorage": {
+            "Description": "Allocated Storage for Microsoft SQL server. (GB)",
+            "ConstraintDescription": "Allocated Storage must be numeric and between 20 and 16384.",
+            "Type": "Number",
+            "Default": 25,
+            "MaxValue": 16384,
+            "MinValue": 20
+        },
+        "DBInstanceClass": {
+            "Description": "DB Instance Class for Microsoft SQL server.",
+            "ConstraintDescription": "DBInstanceClass must be a valid DB instance type.",
+            "Type": "String",
+            "Default": "db.t2.medium",
+            "AllowedValues": [
+                "db.t2.micro",
+                "db.t2.small",
+                "db.t2.medium",
+                "db.t3.small",
+                "db.t3.medium",
+                "db.t3.large",
+                "db.t3.xlarge"
+            ]
+        },
+        "DBMasterUsername": {
+            "Description": "Username for master account on Microsoft SQL server.",
+            "Type": "String"
+        },
+        "DBMasterUserPassword": {
+            "Description": "Password for master account on Microsoft SQL server.",
+            "ConstraintDescription": "Must be between 8 to 41 alphanumeric charecters.",
+            "Type": "String",
+            "MaxLength": 41,
+            "MinLength": 8,
+            "NoEcho": "true"
+        },
+        "DBMasterUserPasswordConfirm": {
+            "Description": "Confirmation of Password of master account on Microsoft SQL server.",
+            "ConstraintDescription": "Must be between 8 to 41 alphanumeric charecters.",
+            "Type": "String",
+            "MaxLength": 41,
+            "MinLength": 8,
+            "NoEcho": "true"
+        },
+        "DBSnapshotID": {
+            "Description": "The RDS Microsoft SQL server snapshot name to restore to the new DB instance. Only fill a value here if you are restoring a snapshot. (Optional)",
+            "Type": "String",
+            "Default": ""
+        }
+    },
+    "Rules": {
+        "SubnetsInVPC": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::EachMemberIn": [
+                            {
+                                "Fn::ValueOfAll": [
+                                    "AWS::EC2::Subnet::Id",
+                                    "VpcId"
+                                ]
+                            },
+                            {
+                                "Fn::RefAll": "AWS::EC2::VPC::Id"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "All subnets must be in the VPC"
+                }
+            ]
+        },
+        "matchPasswordsDBMaster": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "DBMasterUserPassword"
+                            },
+                            {
+                                "Ref": "DBMasterUserPasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Database master user password does not match."
+                }
+            ]
+        }
+    },
+    "Conditions": {
+        "UseDbSnapshot": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "DBSnapshotID"
+                        },
+                        ""
+                    ]
+                }
+            ]
+        }
+    },
+    "Resources": {
+        "DBSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VpcId"
+                },
+                "GroupDescription": "Security group used to secure Microsoft SQL Database.",
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 1433,
+                        "ToPort":1433,
+                        "CidrIp": {
+                            "Ref": "VpcCidrBlock"
+                        }
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Sub": "${AWS::StackName} - TPP Database Security Group"
+                        }
+                    }
+                ]
+            }
+        },
+        "TPPDatabaseMicrosoftSQLSubnetGroup": {
+            "Type": "AWS::RDS::DBSubnetGroup",
+            "Properties": {
+                "DBSubnetGroupDescription": "Subnet Group for the database used as the TPP backend.",
+                "SubnetIds": [
+                    {
+                        "Ref": "PrivateSubnet01ID"
+                    },
+                    {
+                        "Ref": "PrivateSubnet02ID"
+                    }
+                ]
+            }
+        },
+        "TPPDatabaseMicrosoftSQL": {
+            "Type": "AWS::RDS::DBInstance",
+            "Properties": {
+                "AllocatedStorage": {
+                    "Ref": "DBAllocatedStorage"
+                },
+                "DBInstanceClass": {
+                    "Ref": "DBInstanceClass"
+                },
+                "DBSnapshotIdentifier": {
+                    "Fn::If": [
+                        "UseDbSnapshot",
+                        {
+                            "Ref": "DBSnapshotID"
+                        },
+                        {
+                            "Ref": "AWS::NoValue"
+                        }
+                    ]
+                },
+                "DBSubnetGroupName": {
+                    "Ref": "TPPDatabaseMicrosoftSQLSubnetGroup"
+                },
+                "Engine": "sqlserver-ex",
+                "EngineVersion": "14.00.3223.3.v1",
+                "LicenseModel": "license-included",
+                "MasterUsername": {
+                    "Ref": "DBMasterUsername"
+                },
+                "MasterUserPassword": {
+                    "Ref": "DBMasterUserPassword"
+                },
+                "Port": "1433",
+                "PubliclyAccessible": false,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Sub": "${AWS::StackName} - TPP Database"
+                        }
+                    }
+                ],
+                "VPCSecurityGroups": [
+                    {
+                        "Ref": "DBSecurityGroup"
+                    }
+                ]
+            }
+        }
+    },
+    "Outputs": {
+        "TPPDatabaseEndpoint": {
+            "Description": "Endpoint of Microsoft SQL Server",
+            "Value": {
+                "Fn::GetAtt": [
+                    "TPPDatabaseMicrosoftSQL",
+                    "Endpoint.Address"
+                ]
+            }
+        },
+        "TPPDatabasePort": {
+            "Description": "Port of Microsoft SQL Server",
+            "Value": {
+                "Fn::GetAtt": [
+                    "TPPDatabaseMicrosoftSQL",
+                    "Endpoint.Port"
+                ]
+            }
+        }
+    }
+}

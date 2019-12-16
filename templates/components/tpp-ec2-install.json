@@ -1,0 +1,718 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "This template simplifies the deployment of a TPP server on to an AWS EC2 instance. A Microsoft sql server is deployed as the backend instance for the tpp server. For any questions, contact: Cris Madrigal <cris.madrigal@venafi.com>",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Network Configuration"
+                    },
+                    "Parameters": [
+                        "KeyName",
+                        "PrivateSubnet01ID",
+                        "PublicSubnet01ID",
+                        "VpcCidrBlock",
+                        "VpcId"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "TPP Database Setup"
+                    },
+                    "Parameters": [
+                        "DBMasterUsername",
+                        "DBMasterUserPassword",
+                        "DBMasterUserPasswordConfirm",
+                        "DBServiceUsername",
+                        "DBServiceUserPassword",
+                        "DBServiceUserPasswordConfirm",
+                        "DBSnapshot",
+                        "DBUrlEndpoint",
+                        "DBPort"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "TPP Server Setup"
+                    },
+                    "Parameters": [
+                        "TPPAdminAccount",
+                        "TPPAdminAccountPassword",
+                        "TPPAdminAccountPasswordConfirm",
+                        "TPPAMIId",
+                        "TPPAnswerFile",
+                        "TPPInstanceType",
+                        "TPPVolSize",
+                        "VenafiUserLogin",
+                        "VenafiUserPass",
+                        "VenafiUserPassConfirm"
+                    ]
+                }
+            ],
+            "ParameterLabels": {
+                "KeyName": {
+                    "default": "Key pair to access EC2 instance: "
+                },
+                "PrivateSubnet01ID": {
+                    "default": "Private CIDR Block 1 ID: "
+                },
+                "PublicSubnet01ID": {
+                    "default": "Public CIDR Block 1 ID: "
+                },
+                "VpcCidrBlock": {
+                    "default": "CIDR block of your VPC: "
+                },
+                "VpcId": {
+                    "default": "ID of VPC: "
+                },
+                "DBMasterUsername": {
+                    "default": "DBMasterUsername: "
+                },
+                "DBMasterUserPassword": {
+                    "default": "DBMasterUserPassword: "
+                },
+                "DBMasterUserPasswordConfirm": {
+                    "default": "DBMasterUserPassword (Confirm): "
+                },
+                "DBServiceUsername": {
+                    "default": "DBServiceUsername: "
+                },
+                "DBServiceUserPassword": {
+                    "default": "DBServiceUserPassword: "
+                },
+                "DBServiceUserPasswordConfirm": {
+                    "default": "DBServiceUserPassword (Confirm): "
+                },
+                "DBSnapshot": {
+                    "default": "Database Snapshot used?"
+                },
+                "DBUrlEndpoint": {
+                    "default": "URL for Microsoft SQL server: "
+                },
+                "DBPort": {
+                    "default": "Port for Microsoft SQL server: "
+                },
+                "TPPAdminAccount": {
+                    "default": "TPP Admin Username: "
+                },
+                "TPPAdminAccountPassword": {
+                    "default": "TPP Admin Password: "
+                },
+                "TPPAdminAccountPasswordConfirm": {
+                    "default": "TPP Admin Password (Confirm): "
+                },
+                "TPPAMIId": {
+                    "default": "Microsoft Server ID: "
+                },
+                "TPPAnswerFile": {
+                    "default": "TPPAnswerfile: "
+                },
+                "TPPInstanceType": {
+                    "default": "Instance Type for TPP server: "
+                },
+                "TPPVolSize": {
+                    "default": "Volume size of TPP server instance: "
+                },
+                "VenafiUserLogin": {
+                    "default": "Venafi account username: "
+                },
+                "VenafiUserPass": {
+                    "default": "Venafi account password: "
+                },
+                "VenafiUserPassConfirm": {
+                    "default": "Venafi account password (confirm): "
+                }
+            }
+        }
+    },
+    "Parameters": {
+        "KeyName": {
+            "Type": "AWS::EC2::KeyPair::KeyName",
+            "Description": "The EC2 Key Pair to allow SSH access to the instances."
+        },
+        "PrivateSubnet01ID": {
+            "Description": "ID of private subnet 1.",
+            "Type": "AWS::EC2::Subnet::Id"
+        },
+        "PublicSubnet01ID": {
+            "Description": "ID of public subnet 1.",
+            "Type": "AWS::EC2::Subnet::Id"
+        },
+        "VpcCidrBlock": {
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "Description": "CIDR Block of your VPC.",
+            "Type": "String",
+            "MaxLength":"18",
+            "MinLength": "9"
+        },
+        "VpcId": {
+            "Description": "ID of your existing VPC.",
+            "Type": "AWS::EC2::VPC::Id"
+        },
+        "DBMasterUsername": {
+            "Description": "Username for master account on Microsoft SQL server.",
+            "Type": "String"
+        },
+        "DBMasterUserPassword": {
+            "Description": "Password for master account on Microsoft SQL server.",
+            "ConstraintDescription": "Must be between 8 to 128 alphanumeric characters.",
+            "Type": "String",
+            "MaxLength": 128,
+            "MinLength": 8,
+            "NoEcho": "true"
+        },
+        "DBMasterUserPasswordConfirm": {
+            "Description": "Confirmation of Password of master account on Microsoft SQL server.",
+            "ConstraintDescription": "Must be between 8 to 128 alphanumeric characters.",
+            "Type": "String",
+            "MaxLength": 128,
+            "MinLength": 8,
+            "NoEcho": "true"
+        },
+        "DBServiceUsername": {
+            "Description": "Username for service user on Microsoft SQL server.",
+            "Type": "String"
+        },
+        "DBServiceUserPassword": {
+            "Description": "Password for service user on Microsoft SQL server.",
+            "ConstraintDescription": "Must be between 8 to 128 alphanumeric characters.",
+            "Type": "String",
+            "MaxLength": 128,
+            "MinLength": 8,
+            "NoEcho": "true"
+        },
+        "DBServiceUserPasswordConfirm": {
+            "Description": "Confirmation of Password of service user on Microsoft SQL server.",
+            "ConstraintDescription": "Must be between 8 to 128 alphanumeric characters.",
+            "Type": "String",
+            "MaxLength": 128,
+            "MinLength": 8,
+            "NoEcho": "true"
+        },
+        "DBSnapshot": {
+            "Description": "Yes or No value. If the DB is preconfigured (already has ran the necessary scripts or was restored from a snapshot) select Yes, if not, select No.",
+            "Type": "String",
+            "AllowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "DBUrlEndpoint": {
+            "Description": "URL of your RDS Microsoft SQL server.",
+            "Type": "String",
+            "Default": ""
+        },
+        "DBPort": {
+            "Description": "Port of your RDS Microsoft SQL server.",
+            "Type": "Number",
+            "Default": 1433
+        },
+        "TPPAdminAccount": {
+            "Description": "Username for TPP administrator account.",
+            "Type": "String"
+        },
+        "TPPAdminAccountPassword": {
+            "Description": "Password for TPP administrator account. Must contain a lowercase, uppercase, digit and be longer than 12 characters.",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit and be longer than 12 characters.",
+            "Type": "String",
+            "MinLength": 12,
+            "NoEcho": "true"
+        },
+        "TPPAdminAccountPasswordConfirm": {
+            "Description": "Password for TPP administrator account (Confirm). Must contain a lowercase, uppercase, digit and be longer than 12 characters.",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit and be longer than 12 characters.",
+            "Type": "String",
+            "MinLength": 12,
+            "NoEcho": "true"
+        },
+        "TPPAMIId": {
+            "Description": "Latest Microsoft Server 2016 AMI Id.",
+            "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+            "Default": "/aws/service/ami-windows-latest/Windows_Server-2016-English-Full-Base"
+        },
+        "TPPAnswerFile": {
+            "Description": "Pre-configured XML file with TPP server parameters. Should be an acessible URL that can be curled.",
+            "Type": "String"
+        },
+        "TPPInstanceType": {
+            "Description": "Instance type for TPP server.",
+            "ConstraintDescription": "TPPInstanceType must be a valid EC2 instance type.",
+            "Type": "String",
+            "Default": "t2.large",
+            "AllowedValues": [
+                "t2.large",
+                "t2.xlarge",
+                "t2.2xlarge",
+                "t3a.large",
+                "t3a.xlarge",
+                "t3a.2xlarge",
+                "t3.large",
+                "t3.xlarge",
+                "t3.2xlarge",
+                "m5ad.large",
+                "m5ad.xlarge",
+                "m5ad.2xlarge",
+                "m5ad.4xlarge",
+                "m5a.large",
+                "m5a.xlarge",
+                "m5a.2xlarge",
+                "m5a.4xlarge",
+                "m5a.8xlarge",
+                "m5d.large",
+                "m5d.xlarge",
+                "m5d.2xlarge",
+                "m5d.4xlarge",
+                "m5d.8xlarge",
+                "c5n.large",
+                "c5n.xlarge",
+                "c5n.2xlarge",
+                "c5n.4xlarge",
+                "r5ad.large",
+                "r5ad.xlarge",
+                "r5ad.2xlarge",
+                "r5ad.4xlarge",
+                "r5a.large",
+                "r5a.xlarge",
+                "r5a.2xlarge",
+                "r5a.4xlarge"
+            ]
+        },
+        "TPPVolSize": {
+            "Description": "Volume Size of Windows Server 2016 instance. (TPP Server)",
+            "ConstraintDescription": "Volume size must be numeric and between 30 and 16384",
+            "Type": "Number",
+            "Default": 40,
+            "MaxValue": 16384,
+            "MinValue": 30
+        },
+        "VenafiUserLogin": {
+            "Description": "Venafi account username. Used to download the TPP zip file from the downloads site.",
+            "Type": "String"
+        },
+        "VenafiUserPass": {
+            "Description": "Venafi account password. Used to download the TPP zip file from the downloads site.",
+            "Type": "String",
+            "NoEcho": "true"
+        },
+        "VenafiUserPassConfirm": {
+            "Description": "Venafi account password. Used to download the TPP zip file from the downloads site.",
+            "Type": "String",
+            "NoEcho": "true"
+        }
+    },
+    "Rules": {
+        "SubnetsInVPC": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::EachMemberIn": [
+                            {
+                                "Fn::ValueOfAll": [
+                                    "AWS::EC2::Subnet::Id",
+                                    "VpcId"
+                                ]
+                            },
+                            {
+                                "Fn::RefAll": "AWS::EC2::VPC::Id"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "All subnets must be in the VPC"
+                }
+            ]
+        },
+        "matchPasswordsDBMaster": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "DBMasterUserPassword"
+                            },
+                            {
+                                "Ref": "DBMasterUserPasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Database master user password does not match."
+                }
+            ]
+        },
+        "matchPasswordsDBService": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "DBServiceUserPassword"
+                            },
+                            {
+                                "Ref": "DBServiceUserPasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Database service user password does not match."
+                }
+            ]
+        },
+        "matchPasswordsTPPAdmin": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "TPPAdminAccountPassword"
+                            },
+                            {
+                                "Ref": "TPPAdminAccountPasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "TPP Admin account password does not match."
+                }
+            ]
+        },
+        "matchVenafiUserPassword": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "VenafiUserPass"
+                            },
+                            {
+                                "Ref": "VenafiUserPassConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Venafi account password does not match."
+                }
+            ]
+        }
+    },
+    "Conditions": {
+        "DBSnapshotCheck": {
+            "Fn::Equals": [
+                {
+                    "Ref": "DBSnapshot"
+                },
+                "No"
+            ]
+        }
+    },
+    "Resources": {
+        "TPPSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VpcId"
+                },
+                "GroupDescription": "Security group used to secure TPP server.",
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 1433,
+                        "ToPort": 1433,
+                        "CidrIp": {
+                            "Ref": "VpcCidrBlock"
+                        }
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 443,
+                        "ToPort": 443,
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 53,
+                        "ToPort": 53,
+                        "CidrIp": {
+                            "Ref": "VpcCidrBlock"
+                        }
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 25,
+                        "ToPort": 25,
+                        "CidrIp": {
+                            "Ref": "VpcCidrBlock"
+                        }
+                    },
+                    {
+                        "IpProtocol": "udp",
+                        "FromPort": 514,
+                        "ToPort": 514,
+                        "CidrIp": {
+                            "Ref": "VpcCidrBlock"
+                        }
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Sub": "${AWS::StackName} - TPP Security Group"
+                        }
+                    }
+                ]
+            }
+        },
+        "TPPServer": {
+            "Type": "AWS::EC2::Instance",
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "configSets": {
+                        "fullInstallSetup": [
+                            "initialSetup",
+                            "endMessage"
+                        ],
+                        "cfnInitEnd": [
+                            "endMessage"
+                        ]
+                    },
+                    "initialSetup": {
+                        "commands": {
+                            "01_db_create": {
+                                "command": {
+                                    "Fn::If": [
+                                        "DBSnapshotCheck",
+                                        {
+                                            "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -Q \"CREATE DATABASE tppdb\""
+                                        },
+                                        "echo 'Skipping DB creation...'"
+                                    ]
+                                }
+                            },
+                            "02_user-create": {
+                                "command": {
+                                    "Fn::If": [
+                                        "DBSnapshotCheck",
+                                        {
+                                            "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -Q \"CREATE LOGIN ${DBServiceUsername} WITH PASSWORD = '${DBServiceUserPassword}'; USE tppdb; CREATE USER ${DBServiceUsername} FOR LOGIN ${DBServiceUsername}\""
+                                        },
+                                        "echo 'Skipping user creation...'"
+                                    ]
+                                }
+                            },
+                            "03_download-tpp": {
+                                "command": {
+                                    "Fn::Sub": "powershell -Command [system.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://download.venafi.com/Trust Protection Platform/Current/19.4.0/Venafi Trust Protection Platform 19.4.0.zip' -Headers @{ Authorization = \\\"Basic $([System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes(\\\"${VenafiUserLogin}:${VenafiUserPass}\\\")))\\\" } -OutFile 'Venafi Trust Protection Platform 19.4.0.zip'"
+                                }
+                            },
+                            "04_unzip-tpp": {
+                                "command": "powershell -Command Expand-Archive -LiteralPath 'C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0.zip'"
+                            },
+                            "05_create-tppdb": {
+                                "command": {
+                                    "Fn::If": [
+                                        "DBSnapshotCheck",
+                                        {
+                                            "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -i \"C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\CreateDB.sql\" -d tppdb"
+                                        },
+                                        "echo 'Skipping creation of tppdb tables...'"
+                                    ]
+                                }
+                            },
+                            "06_modify-grants-script": {
+                                "command": {
+                                    "Fn::If": [
+                                        "DBSnapshotCheck",
+                                        {
+                                            "Fn::Sub": "powershell -Command \"(get-content 'C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\Grants\\sample-grants.sql') | ForEach-Object {$_ -replace \\\"DIRECTOR_RW\\\",\\\"${DBServiceUsername}\\\"} | set-content 'C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\Grants\\sample-grants.sql'\""
+                                        },
+                                        "echo 'Skipping modification of grant scripts...'"
+                                    ]
+                                }
+                            },
+                            "07_run-grants-script": {
+                                "command": {
+                                    "Fn::If": [
+                                        "DBSnapshotCheck",
+                                        {
+                                            "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -i \"C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\Grants\\sample-grants.sql\" -d tppdb"
+                                        },
+                                        "echo 'Skipping running grant scripts...'"
+                                    ]
+                                }
+                            },
+                            "08_install-net-framework-4.7.2": {
+                                "command": "NDP472-KB4054531-Web.exe /install /q ",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "forever"
+                            },
+                            "09_install-IIS": {
+                                "command": "powershell -Command Install-WindowsFeature -name Web-Server -IncludeManagementTools"
+                            },
+                            "10_install-IIS-rewrite": {
+                                "command": "msiexec /i rewrite_amd64.msi /q",
+                                "cwd": "C:\\Users\\Administrator\\Downloads"
+                            },
+                            "11_install-IIS-extension": {
+                                "command": "powershell -Command Enable-WindowsOptionalFeature -Online -FeatureName IIS-ApplicationDevelopment; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ApplicationInit; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ISAPIExtensions; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ASP; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ISAPIFilter; Enable-WindowsOptionalFeature -Online -FeatureName IIS-WebSockets; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ServerSideIncludes"
+                            },
+                            "12_enable-IIS-extension": {
+                                "command": "dism /online /enable-feature /all /featurename:IIS-ASPNET45"
+                            },
+                            "13_install-msi": {
+                                "command": "msiexec /i VenafiTPPInstallx64.msi /q /n",
+                                "cwd": "C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0"
+                            },
+                            "14_replace-answerfile":{
+                                "command": {
+                                    "Fn::Sub": "powershell -Command \"(get-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml') | ForEach-Object {$_ -replace \\\"DB_URL\\\",\\\"${DBUrlEndpoint}\\\"} | ForEach-Object {$_ -replace \\\"DB_PORT\\\",\\\"${DBPort}\\\"} | ForEach-Object {$_ -replace \\\"DB_USER\\\",\\\"${DBServiceUsername}\\\"} | ForEach-Object {$_ -replace \\\"DB_PASS\\\",\\\"${DBServiceUserPassword}\\\"} | ForEach-Object {$_ -replace \\\"TPP_ADMIN\\\",\\\"${TPPAdminAccount}\\\"} | ForEach-Object {$_ -replace \\\"TPP_PASS\\\",\\\"${TPPAdminAccountPassword}\\\"} | set-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml'\""
+                                }
+                            },
+                            "15_install-tpp": {
+                                "command": {
+                                    "Fn::If": [
+                                        "DBSnapshotCheck",
+                                        "TppConfiguration.exe -install:C:\\Users\\Administrator\\Downloads\\answerfile.xml",
+                                        "TppConfiguration.exe -install:C:\\Users\\Administrator\\Downloads\\answerfile.xml -add"
+                                    ]    
+                                },
+                                "cwd": "C:\\Program Files\\Venafi\\Platform"
+                            }
+                        }     
+                    },
+                    "endMessage": {
+                        "commands": {
+                            "01_end_Message": {
+                                "command": "echo 'end cfn-init...'"
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties": {
+                "BlockDeviceMappings": [
+                    {
+                        "DeviceName": "/dev/sda1",
+                        "Ebs": {
+                            "VolumeSize": {
+                                "Ref": "TPPVolSize"
+                            }
+                        }
+                    }
+                ],
+                "ImageId": {
+                    "Ref": "TPPAMIId"
+                },
+                "InstanceType": {
+                    "Ref": "TPPInstanceType"
+                },
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "SecurityGroupIds": [
+                    {
+                        "Ref": "TPPSecurityGroup"
+                    }
+                ],
+                "SubnetId": {
+                    "Ref": "PublicSubnet01ID"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Sub": "${AWS::StackName} - TPP Server"
+                        }
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "<script>\n",
+                                "cd C:\\Users\\Administrator\\Downloads\n",
+                                "powershell -command \"& { iwr 'https://aka.ms/vs/16/release/vc_redist.x64.exe' -OutFile vc_redist.x64.exe }\"\n",
+                                "vc_redist.x64.exe /install /passive /norestart\n",
+                                "powershell -command \"& { iwr http://go.microsoft.com/fwlink/?LinkId=863262 -Outfile NDP472-KB4054531-Web.exe }\"\n",
+                                "md C:\\source\\sxs\n",
+                                "powershell -command Install-WindowsFeature -Name Net-Framework-Core -Source C:\\source\\sxs\n",
+                                "powershell -command \"& { iwr 'https://download.microsoft.com/download/E/6/B/E6BFDC7A-5BCD-4C51-9912-635646DA801E/en-US/msodbcsql_17.4.2.1_x64.msi' -OutFile msodbcsql_17.4.2.1_x64.msi }\"\n",
+                                "msiexec /quiet /passive /qn /i msodbcsql_17.4.2.1_x64.msi IACCEPTMSODBCSQLLICENSETERMS=YES ADDLOCAL=ALL\n",
+                                "powershell -command \"& { iwr https://go.microsoft.com/fwlink/?linkid=2082790 -OutFile MsSqlCmdLnUtils.msi }\"\n",
+                                "msiexec /quiet /passive /qn /i MsSqlCmdLnUtils.msi IACCEPTMSSQLCMDLNUTILSLICENSETERMS=YES\n",
+                                "set PATH=%PATH%;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;\n",
+                                {
+                                    "Fn::Sub": "powershell -command \"& { iwr ${TPPAnswerFile} -Outfile answerfile.xml }\""
+                                },
+                                "\n",
+                                "powershell -command \"& { iwr https://download.microsoft.com/download/C/9/E/C9E8180D-4E51-40A6-A9BF-776990D8BCA9/rewrite_amd64.msi -Outfile rewrite_amd64.msi }\"\n",
+                                "cfn-init.exe -v -s ", 
+                                {
+                                    "Ref": "AWS::StackId"
+                                },
+                                " -r TPPServer -c fullInstallSetup",
+                                " --region ",
+                                {
+                                    "Ref": "AWS::Region"
+                                }, "\n",
+                                "cfn-signal.exe -e %ERRORLEVEL% --resource TPPServer --stack ", 
+                                {
+                                    "Ref": "AWS::StackName"
+                                },
+                                " --region ",
+                                {
+                                    "Ref": "AWS::Region"
+                                }, "\n",
+                                "</script>"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "TPPEIP": {
+            "Type": "AWS::EC2::EIP",
+            "Properties": {
+                "Domain": "vpc",
+                "InstanceId": {
+                    "Ref": "TPPServer"
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "TPPServerIPAddress": {
+            "Description": "TPP Webserver",
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "https://",
+                        {
+                            "Fn::GetAtt": [
+                                "TPPServer",
+                                "PublicIp"
+                            ]
+                        },
+                        "/vedadmin"
+                    ]
+                ]
+            }
+        },
+        "TPPApertureAddress": {
+            "Description": "TPP Webserver of Aperture server",
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "https://",
+                        {
+                            "Fn::GetAtt": [
+                                "TPPServer",
+                                "PublicIp"
+                            ]
+                        },
+                        "/aperture"
+                    ]
+                ]
+            }
+        }
+    }
+}

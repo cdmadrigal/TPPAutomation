@@ -1,0 +1,525 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Nested template that calls two templates, one to create a VPC and the other to deploy all the artifacts for TPP.",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Network Configuration"
+                    },
+                    "Parameters": [
+                        "KeyName",
+                        "PrivateSubnet01Block",
+                        "PrivateSubnet02Block",
+                        "PublicSubnet01Block",
+                        "PublicSubnet02Block",
+                        "VpcBlock"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "TPP Database Setup"
+                    },
+                    "Parameters": [
+                        "DBAllocatedStorage",
+                        "DBInstanceClass",
+                        "DBMasterUsername",
+                        "DBMasterUserPassword",
+                        "DBMasterUserPasswordConfirm",
+                        "DBServiceUsername",
+                        "DBServiceUserPassword",
+                        "DBServiceUserPasswordConfirm",
+                        "DBSnapshotID"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "TPP Server Setup"
+                    },
+                    "Parameters": [
+                        "TPPAdminAccount",
+                        "TPPAdminAccountPassword",
+                        "TPPAdminAccountPasswordConfirm",
+                        "TPPAMIId",
+                        "TPPAnswerFile",
+                        "TPPInstanceType",
+                        "TPPVolSize",
+                        "VenafiUserLogin",
+                        "VenafiUserPass",
+                        "VenafiUserPassConfirm"
+                    ]
+                }
+            ],
+            "ParameterLabels": {
+                "KeyName": {
+                    "default": "Key Pair: "
+                },
+                "PrivateSubnet01Block": {
+                    "default": "Private Subnet 1 CIDR Block: "
+                },
+                "PrivateSubnet02Block": {
+                    "default": "Private Subnet 2 CIDR Block: "
+                },
+                "PublicSubnet01Block": {
+                    "default": "Public Subnet 1 CIDR Block: "
+                },
+                "PublicSubnet02Block": {
+                    "default": "Public Subnet 2 CIDR Block: "
+                },
+                "VpcBlock": {
+                    "default": "VPC CIDR Block: "
+                },
+                "DBAllocatedStorage": {
+                    "default": "Storage size of Microsoft SQL server: "
+                },
+                "DBInstanceClass": {
+                    "default": "Microsoft SQL server class type: "
+                },
+                "DBMasterUsername": {
+                    "default": "DB Master Username: "
+                },
+                "DBMasterUserPassword": {
+                    "default": "DB Master Password: "
+                },
+                "DBMasterUserPasswordConfirm": {
+                    "default": "DB Master Password (Confirm): "
+                },
+                "DBServiceUsername": {
+                    "default": "DB Service Username: "
+                },
+                "DBServiceUserPassword": {
+                    "default": "DB Service User Password: "
+                },
+                "DBServiceUserPasswordConfirm": {
+                    "defaul": "DB Service User Password (Confirm): "
+                },
+                "DBSnapshotID": {
+                    "default": "Snapshot ID: "
+                },
+                "TPPAdminAccount": {
+                    "default": "TPP Admin Username: "
+                },
+                "TPPAdminAccountPassword": {
+                    "default": "TPP Admin Password: "
+                },
+                "TPPAdminAccountPasswordConfirm": {
+                    "default": "TPP Admin Password (Confirm): "
+                },
+                "TPPAMIId": {
+                    "defaul": "Microsoft Server ID: "
+                },
+                "TPPAnswerFile": {
+                    "default": "AnswerFile.xml URL Location: "
+                },
+                "TPPInstanceType": {
+                    "default": "Instance Type of TPP server: "
+                },
+                "TPPVolSize": {
+                    "default": "Volume size of TPP server: "
+                },
+                "VenafiUserLogin": {
+                    "default": "Venafi Account Username: "
+                },
+                "VenafiUserPass": {
+                    "default": "Venafi Account Password: "
+                },
+                "VenafiUserPassConfirm": {
+                    "default": "Venafi Account Password (Confirm): "
+                }
+            }
+        }
+    },
+    "Parameters": {
+        "KeyName": {
+            "Type": "AWS::EC2::KeyPair::KeyName",
+            "Description": "The EC2 Key Pair to allow SSH access to the instances."
+        },
+        "PrivateSubnet01Block": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "Description": "CIDR block for private subnet 1 within the VPC.",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Type": "String",
+            "Default": "192.168.128.0/24"
+        },
+        "PrivateSubnet02Block": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "Description": "CIDR block for private subnet 2 within the VPC.",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Type": "String",
+            "Default": "192.168.192.0/24"
+        },
+        "PublicSubnet01Block": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "Description": "CIDR block for public subnet 1 within the VPC.",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Type": "String",
+            "Default": "192.168.0.0/24"
+        },
+        "PublicSubnet02Block": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "Description": "CIDR block for public subnet 2 within the VPC.",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Type": "String",
+            "Default": "192.168.64.0/24"
+        },
+        "VpcBlock": {
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "Description": "The CIDR range of your VPC.",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Type": "String",
+            "Default": "192.168.0.0/16"
+        },
+        "DBAllocatedStorage": {
+            "Description": "Allocated Storage for Microsoft SQL server. (GB)",
+            "ConstraintDescription": "Allocated Storage must be numeric and between 20 and 16384.",
+            "Type": "Number",
+            "Default": 25,
+            "MaxValue": 16384,
+            "MinValue": 20
+        },
+        "DBInstanceClass": {
+            "Description": "DB Instance Class for Microsoft SQL server.",
+            "ConstraintDescription": "DBInstanceClass must be a valid DB instance type.",
+            "Type": "String",
+            "Default": "db.t2.medium",
+            "AllowedValues": [
+                "db.t2.micro",
+                "db.t2.small",
+                "db.t2.medium",
+                "db.t3.small",
+                "db.t3.medium",
+                "db.t3.large",
+                "db.t3.xlarge"
+            ]
+        },
+        "DBMasterUsername": {
+            "Description": "Username for master account on Microsoft SQL server.",
+            "Type": "String"
+        },
+        "DBMasterUserPassword": {
+            "Description": "Password for master account on Microsoft SQL server.",
+            "ConstraintDescription": "Must be between 8 to 128 alphanumeric charecters.",
+            "Type": "String",
+            "MaxLength": 128,
+            "MinLength": 8,
+            "NoEcho": "true"
+        },
+        "DBMasterUserPasswordConfirm": {
+            "Description": "Confirmation of Password of master account on Microsoft SQL server.",
+            "ConstraintDescription": "Must be between 8 to 128 alphanumeric charecters.",
+            "Type": "String",
+            "MaxLength": 128,
+            "MinLength": 8,
+            "NoEcho": "true"
+        },
+        "DBServiceUsername": {
+            "Description": "Username for service user on Microsoft SQL server.",
+            "Type": "String"
+        },
+        "DBServiceUserPassword": {
+            "Description": "Password for service user on Microsoft SQL server.",
+            "ConstraintDescription": "Must be between 8 to 128 alphanumeric charecters.",
+            "Type": "String",
+            "MaxLength": 128,
+            "MinLength": 8,
+            "NoEcho": "true"
+        },
+        "DBServiceUserPasswordConfirm": {
+            "Description": "Confirmation of Password of service user on Microsoft SQL server.",
+            "ConstraintDescription": "Must be between 8 to 128 alphanumeric charecters.",
+            "Type": "String",
+            "MaxLength": 128,
+            "MinLength": 8,
+            "NoEcho": "true"
+        },
+        "DBSnapshotID": {
+            "Description": "The RDS Microsoft SQL server snapshot name to restore to the new DB instance. Only fill a value here if you are restoring a snapshot. (Optional)",
+            "Type": "String",
+            "Default": ""
+        },
+        "TPPAdminAccount": {
+            "Description": "Username for TPP administrator account.",
+            "Type": "String"
+        },
+        "TPPAdminAccountPassword": {
+            "Description": "Password for TPP administrator account. Must contain a lowercase, uppercase, digit and be longer than 12 characters.",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit and be longer than 12 characters.",
+            "Type": "String",
+            "MinLength": 12,
+            "NoEcho": "true"
+        },
+        "TPPAdminAccountPasswordConfirm": {
+            "Description": "Password for TPP administrator account (Confirm). Must contain a lowercase, uppercase, digit and be longer than 12 characters.",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit and be longer than 12 characters.",
+            "Type": "String",
+            "MinLength": 12,
+            "NoEcho": "true"
+        },
+        "TPPAMIId": {
+            "Description": "Latest Microsoft Server 2016 AMI Id.",
+            "Type": "String",
+            "Default": "/aws/service/ami-windows-latest/Windows_Server-2016-English-Full-Base"
+        },
+        "TPPAnswerFile": {
+            "Description": "Pre-configured XML file with TPP server parameters. Should be an acessible URL that can be curled.",
+            "Type": "String"
+        },
+        "TPPInstanceType": {
+            "Description": "Instance type for TPP server.",
+            "ConstraintDescription": "TPPInstanceType must be a valid EC2 instance type.",
+            "Type": "String",
+            "Default": "t2.large",
+            "AllowedValues": [
+                "t2.large",
+                "t2.xlarge",
+                "t2.2xlarge",
+                "t3a.large",
+                "t3a.xlarge",
+                "t3a.2xlarge",
+                "t3.large",
+                "t3.xlarge",
+                "t3.2xlarge",
+                "m5ad.large",
+                "m5ad.xlarge",
+                "m5ad.2xlarge",
+                "m5ad.4xlarge",
+                "m5ad.8xlarge",
+                "m5a.large",
+                "m5a.xlarge",
+                "m5a.2xlarge",
+                "m5a.4xlarge",
+                "m5a.8xlarge",
+                "m5d.large",
+                "m5d.xlarge",
+                "m5d.2xlarge",
+                "m5d.4xlarge",
+                "m5d.8xlarge",
+                "c5n.large",
+                "c5n.xlarge",
+                "c5n.2xlarge",
+                "c5n.4xlarge",
+                "r5ad.large",
+                "r5ad.xlarge",
+                "r5ad.2xlarge",
+                "r5ad.4xlarge",
+                "r5a.large",
+                "r5a.xlarge",
+                "r5a.2xlarge",
+                "r5a.4xlarge"
+            ]
+        },
+        "TPPVolSize": {
+            "Description": "Volume Size of Windows Server 2016 instance. (TPP Server)",
+            "ConstraintDescription": "Volume size must be numeric and between 30 and 16384",
+            "Type": "Number",
+            "Default": 40,
+            "MaxValue": 16384,
+            "MinValue": 30
+        },
+        "VenafiUserLogin": {
+            "Description": "Venafi account username. Used to download the TPP zip file from the downloads site.",
+            "Type": "String"
+        },
+        "VenafiUserPass": {
+            "Description": "Venafi account password. Used to download the TPP zip file from the downloads site.",
+            "Type": "String",
+            "NoEcho": "true"
+        },
+        "VenafiUserPassConfirm": {
+            "Description": "Venafi account password. Used to download the TPP zip file from the downloads site.",
+            "Type": "String",
+            "NoEcho": "true"
+        }
+    },
+    "Rules": {
+        "matchPasswordsDBMaster": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "DBMasterUserPassword"
+                            },
+                            {
+                                "Ref": "DBMasterUserPasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Database master user password does not match."
+                }
+            ]
+        },
+        "matchPasswordsDBService": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "DBServiceUserPassword"
+                            },
+                            {
+                                "Ref": "DBServiceUserPasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Database service user password does not match."
+                }
+            ]
+        },
+        "matchPasswordsTPPAdmin": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "TPPAdminAccountPassword"
+                            },
+                            {
+                                "Ref": "TPPAdminAccountPasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "TPP Admin account password does not match."
+                }
+            ]
+        },
+        "matchVenafiUserPassword": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "VenafiUserPass"
+                            },
+                            {
+                                "Ref": "VenafiUserPassConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Venafi account password does not match."
+                }
+            ]
+        }
+    },
+    "Resources": {
+        "VPCStack": {
+            "Type": "AWS::CloudFormation::Stack",
+            "Properties": {
+                "TemplateURL": "https://github.com/aws-quickstart/quickstart-aws-vpc/blob/master/templates/aws-vpc.template",
+                "Parameters": {
+                    "PrivateSubnet1ACIDR": {
+                        "Ref": "PrivateSubnet01Block"
+                    },
+                    "PrivateSubnet2ACIDR": {
+                        "Ref": "PrivateSubnet02Block"
+                    },
+                    "PublicSubnet1CIDR": {
+                        "Ref": "PublicSubnet01Block"
+                    },
+                    "PublicSubnet2CIDR": {
+                        "Ref": "PublicSubnet02Block"
+                    },
+                    "VpcBlock": {
+                        "Ref": "VpcBlock"
+                    }
+                }
+            }
+        },
+        "FullDeployStack": {
+            "Type": "AWS::CloudFormation::Stack",
+            "Properties": {
+                "TemplateURL": "",
+                "Parameters": {
+                    "KeyName": {
+                        "Ref": "KeyName"
+                    },
+                    "PrivateSubnet01ID": {
+                        "Fn::GetAtt": [
+                            "VPCStack",
+                            "Outputs.PrivateSubnet1AID"
+                        ]
+                    },
+                    "PrivateSubnet02ID": {
+                        "Fn::GetAtt": [
+                            "VPCStack",
+                            "Outputs.PrivateSubnet2AID"
+                        ]
+                    },
+                    "PublicSubnet01ID": {
+                        "Fn::GetAtt": [
+                            "VPCStack",
+                            "Outputs.PublicSubnet1ID"
+                        ]
+                    },
+                    "VpcCidrBlock": {
+                        "Ref": "VpcBlock"
+                    },
+                    "VpcId": {
+                        "Fn::GetAtt": [
+                            "VPCStack",
+                            "Outputs.VPCID"
+                        ]
+                    },
+                    "DBAllocatedStorage": {
+                        "Ref": "DBAllocatedStorage"
+                    },
+                    "DBInstanceClass": {
+                        "Ref": "DBInstanceClass"
+                    },
+                    "DBMasterUsername": {
+                        "Ref": "DBMasterUsername"
+                    },
+                    "DBMasterUserPassword": {
+                        "Ref": "DBMasterUserPassword"
+                    },
+                    "DBMasterUserPasswordConfirm": {
+                        "Ref": "DBMasterUserPasswordConfirm"
+                    },
+                    "DBServiceUsername": {
+                        "Ref": "DBServiceUsername"
+                    },
+                    "DBServiceUserPassword": {
+                        "Ref": "DBServiceUserPassword"
+                    },
+                    "DBServiceUserPasswordConfirm": {
+                        "Ref": "DBServiceUserPasswordConfirm"
+                    },
+                    "DBSnapshotID": {
+                        "Ref": "DBSnapshotID"
+                    },
+                    "TPPAdminAccount": {
+                        "Ref": "TPPAdminAccount"
+                    },
+                    "TPPAdminAccountPassword": {
+                        "Ref": "TPPAdminAccountPassword"
+                    },
+                    "TPPAdminAccountPasswordConfirm": {
+                        "Ref": "TPPAdminAccountPasswordConfirm"
+                    },
+                    "TPPAMIId": {
+                        "Ref": "TPPAMIId"
+                    },
+                    "TPPAnswerFile": {
+                        "Ref": "TPPAnswerFile"
+                    },
+                    "TPPInstanceType": {
+                        "Ref": "TPPInstanceType"
+                    },
+                    "TPPVolSize": {
+                        "Ref": "TPPVolSize"
+                    },
+                    "VenafiUserLogin": {
+                        "Ref": "VenafiUserLogin"
+                    },
+                    "VenafiUserPass": {
+                        "Ref": "VenafiUserPass"
+                    },
+                    "VenafiUserPassConfirm": {
+                        "Ref": "VenafiUserPassConfirm"
+                    }
+                }
+            }
+        }
+    }
+}

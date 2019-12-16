@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<TppConfiguration CreatedOn="04/18/2019 12:32:53" By="Me" On="WIN-VDDTEDTALKS">
+<Components>
+    <Products>CertificateProduct
+SshProduct
+CommonProduct
+</Products>
+    <Features>Acme
+BulkProvisioning
+CAImport
+Certificates
+CloudMonitoring
+Scep
+OBDDiscovery
+Revocation
+TrustNetIntegration
+Validation
+SSH
+Aperture
+AuthServer
+AutoLayout
+Client
+Discovery
+Monitoring
+Reporting
+WebAdmin
+WebSDK
+</Features>
+    </Components>
+    <SoftwareEncryption>
+        <Generate />
+    </SoftwareEncryption>
+    <Database>
+        <DSN>Data Source=DB_URL,DB_PORT;Initial Catalog=tppdb;User ID=DB_USER;Password=DB_PASS</DSN>
+    </Database>
+    <AdminAccount>
+        <Username>TPP_ADMIN</Username>
+        <Password>TPP_PASS</Password>
+    </AdminAccount>
+    <Logging>
+        <LogProcessor />
+        <LogExpiration Days="90" />
+    </Logging>
+    <Environment>
+        <CompanyName>Venafi</CompanyName>
+        <DeploymentType>TEST</DeploymentType>
+    </Environment>
+    <Analytics>
+        <IncludeCompanyName>true</IncludeCompanyName>
+    </Analytics>
+    <Server>
+        <StartServices>yes</StartServices>
+        <LogPath>C:\Program Files\Venafi\Logs\Tpp Configuration Log.txt</LogPath>
+    </Server>
+</TppConfiguration>
