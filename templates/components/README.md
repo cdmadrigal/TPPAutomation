@@ -1,4 +1,4 @@
-# Automate TPP Install will AWS CloudFormation
+# Automate TPP Install with AWS CloudFormation
 
 ## Abstract
 This README will document the functionality of the msql-db-install.json and tpp-ec2-install.json files. This is useful if you are looking to deploy individual components. 

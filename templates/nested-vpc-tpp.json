@@ -429,7 +429,7 @@
         "FullDeployStack": {
             "Type": "AWS::CloudFormation::Stack",
             "Properties": {
-                "TemplateURL": "",
+                "TemplateURL": "https://github.com/cdmadrigal/TPPAutomation/blob/master/templates/nested-novpc-tpp.json",
                 "Parameters": {
                     "KeyName": {
                         "Ref": "KeyName"

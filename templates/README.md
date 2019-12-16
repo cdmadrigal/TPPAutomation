@@ -1,4 +1,4 @@
-# Automate TPP Install will AWS CloudFormation
+# Automate TPP Install with AWS CloudFormation
 
 ## Abstract
 You have a few ways to deploy this project. First you need to make the choice if you want this in an existing VPC or a new one created with all of the artifacts. 

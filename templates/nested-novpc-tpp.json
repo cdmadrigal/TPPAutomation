@@ -427,7 +427,7 @@
         "DBStack": {
             "Type": "AWS::CloudFormation::Stack",
             "Properties": {
-                "TemplateURL": "",
+                "TemplateURL": "https://github.com/cdmadrigal/TPPAutomation/blob/master/templates/components/msql-db-install.json",
                 "Parameters": {
                     "PrivateSubnet01ID": {
                         "Ref": "PrivateSubnet01ID"
@@ -465,7 +465,7 @@
         "TPPStack": {
             "Type": "AWS::CloudFormation::Stack",
             "Properties": {
-                "TemplateURL": "",
+                "TemplateURL": "https://github.com/cdmadrigal/TPPAutomation/blob/master/templates/components/tpp-ec2-install.json",
                 "Parameters": {
                     "KeyName": {
                         "Ref": "KeyName"
