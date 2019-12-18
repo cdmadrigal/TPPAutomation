@@ -9,6 +9,7 @@
                         "default": "Network Configuration"
                     },
                     "Parameters": [
+                        "AvailabilityZones",
                         "KeyName",
                         "PrivateSubnet01Block",
                         "PrivateSubnet02Block",
@@ -52,6 +53,9 @@
                 }
             ],
             "ParameterLabels": {
+                "AvailabilityZones": {
+                    "default": "Availability Zones: "
+                },
                 "KeyName": {
                     "default": "Key Pair: "
                 },
@@ -131,6 +135,10 @@
         }
     },
     "Parameters": {
+        "AvailabilityZones": {
+            "Description": "List of Availability Zones to use for the subnets in the VPC. Note: The logical order is preserved. 2 AZs are used for this deployment.",
+            "Type": "List<AWS::EC2::AvailabilityZone::Name>"
+        },
         "KeyName": {
             "Type": "AWS::EC2::KeyPair::KeyName",
             "Description": "The EC2 Key Pair to allow SSH access to the instances."
@@ -406,7 +414,7 @@
         "VPCStack": {
             "Type": "AWS::CloudFormation::Stack",
             "Properties": {
-                "TemplateURL": "https://github.com/aws-quickstart/quickstart-aws-vpc/blob/master/templates/aws-vpc.template",
+                "TemplateURL": "https://aws-quickstart.s3.amazonaws.com/quickstart-aws-vpc/templates/aws-vpc.template",
                 "Parameters": {
                     "PrivateSubnet1ACIDR": {
                         "Ref": "PrivateSubnet01Block"
@@ -420,6 +428,15 @@
                     "PublicSubnet2CIDR": {
                         "Ref": "PublicSubnet02Block"
                     },
+                    "AvailabilityZones": {
+                        "Fn::Join": [
+                            ",",
+                            {
+                                "Ref": "AvailabilityZones"
+                            }
+                        ]
+                    },
+                    "NumberOfAZs": "2",
                     "VpcBlock": {
                         "Ref": "VpcBlock"
                     }
@@ -429,7 +446,7 @@
         "FullDeployStack": {
             "Type": "AWS::CloudFormation::Stack",
             "Properties": {
-                "TemplateURL": "https://github.com/cdmadrigal/TPPAutomation/blob/master/templates/nested-novpc-tpp.json",
+                "TemplateURL": "https://venafi-tpp-automation.s3.amazonaws.com/templates/nested-novpc-tpp.json",
                 "Parameters": {
                     "KeyName": {
                         "Ref": "KeyName"
