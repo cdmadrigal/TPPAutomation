@@ -453,7 +453,7 @@
                     "DBMasterUserPassword": {
                         "Ref": "DBMasterUserPassword"
                     },
-                    "DBServiceUserPasswordConfirm": {
+                    "DBMasterUserPasswordConfirm": {
                         "Ref": "DBMasterUserPasswordConfirm"
                     },
                     "DBSnapshotID": {

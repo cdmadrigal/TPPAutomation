@@ -437,7 +437,7 @@
                         ]
                     },
                     "NumberOfAZs": "2",
-                    "VpcBlock": {
+                    "VPCCIDR": {
                         "Ref": "VpcBlock"
                     }
                 }
