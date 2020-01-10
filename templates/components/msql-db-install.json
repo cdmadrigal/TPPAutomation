@@ -107,8 +107,10 @@
             ]
         },
         "DBMasterUsername": {
+            "AllowedPattern": "^[a-z0-9]+$",
             "Description": "Username for master account on Microsoft SQL server.",
-            "Type": "String"
+            "Type": "String",
+            "MaxLength": 16
         },
         "DBMasterUserPassword": {
             "Description": "Password for master account on Microsoft SQL server.",

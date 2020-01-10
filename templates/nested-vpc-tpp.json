@@ -6,6 +6,16 @@
             "ParameterGroups": [
                 {
                     "Label": {
+                        "default": "General Configuration"
+                    },
+                    "Parameters": [
+                        "GitHubAccount",
+                        "GitHubBranch",
+                        "GitHubRepository"
+                    ]
+                },
+                {
+                    "Label": {
                         "default": "Network Configuration"
                     },
                     "Parameters": [
@@ -16,6 +26,21 @@
                         "PublicSubnet01Block",
                         "PublicSubnet02Block",
                         "VpcBlock"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Microsoft AD Setup"
+                    },
+                    "Parameters": [
+                        "MicrosoftADConfirmationCheck",
+                        "ADAccountUsername",
+                        "ADAccountPassword",
+                        "ADAccountPasswordConfirm",
+                        "ADSafeModePassword",
+                        "ADSafeModePasswordConfirm",
+                        "ADDomainName",
+                        "ADNetBiosName"
                     ]
                 },
                 {
@@ -53,6 +78,15 @@
                 }
             ],
             "ParameterLabels": {
+                "GitHubAccount": {
+                    "default": "GitHub Account Name: "  
+                },
+                "GitHubBranch": {
+                    "default": "GitHub Branch Name: "
+                },
+                "GitHubRepository": {
+                    "default": "GitHub Repository Name: "
+                },
                 "AvailabilityZones": {
                     "default": "Availability Zones: "
                 },
@@ -73,6 +107,30 @@
                 },
                 "VpcBlock": {
                     "default": "VPC CIDR Block: "
+                },
+                "MicrosoftADConfirmationCheck": {
+                    "default": "Install Microsoft AD confirmation: "
+                },
+                "ADAccountUsername": {
+                    "default": "Microsoft Active Directory User: "
+                },
+                "ADAccountPassword": {
+                    "default": "Microsoft Active Directory Password: "
+                },
+                "ADAccountPasswordConfirm": {
+                    "default": "Microsoft Active Directory Password: (Confirm) "
+                },
+                "ADSafeModePassword": {
+                    "default": "Microsoft Active Directory safe mode recovery password: "
+                },
+                "ADSafeModePasswordConfirm": {
+                    "default": "Microsoft AD safe mode recovery password (Confirm): "
+                },
+                "ADDomainName": {
+                    "default": "Microsoft Active Directory domain name: "
+                },
+                "ADNetBiosName": {
+                    "default": "Microsoft Active Directory netbios name: "
                 },
                 "DBAllocatedStorage": {
                     "default": "Storage size of Microsoft SQL server: "
@@ -111,7 +169,7 @@
                     "default": "TPP Admin Password (Confirm): "
                 },
                 "TPPAMIId": {
-                    "defaul": "Microsoft Server ID: "
+                    "default": "Microsoft Server ID: "
                 },
                 "TPPAnswerFile": {
                     "default": "AnswerFile.xml URL Location: "
@@ -135,6 +193,21 @@
         }
     },
     "Parameters": {
+        "GitHubAccount": {
+            "Description": "GitHub account name housing TPPAutomation repository",
+            "Type": "String",
+            "Default": "cdmadrigal"
+        },
+        "GitHubBranch": {
+            "Description": "GitHub repository branch name. Examples: 'v0.1', 'dev",
+            "Type": "String",
+            "Default": "master"
+        },
+        "GitHubRepository": {
+            "Description": "Repository name where your project is stored. Example: 'TPPRepository'",
+            "Type": "String",
+            "Default": "TPPAutomation"
+        },
         "AvailabilityZones": {
             "Description": "List of Availability Zones to use for the subnets in the VPC. Note: The logical order is preserved. 2 AZs are used for this deployment.",
             "Type": "List<AWS::EC2::AvailabilityZone::Name>"
@@ -178,6 +251,57 @@
             "Type": "String",
             "Default": "192.168.0.0/16"
         },
+        "ADAccountUsername": {
+            "Description": "Username of Microsoft Active Directory user.",
+            "Type": "String",
+            "Default": "aduser"
+        },
+        "ADAccountPassword": {
+            "Description": "Password of Microsoft Active Directory user. Example: Passw0rd1#@3451",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true"
+        },
+        "ADAccountPasswordConfirm": {
+            "Description": "Password of Microsoft Active Directory user (Confirmation). Example: Passw0rd1#@3451",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true",
+            "MinLength": 12
+        },
+        "ADSafeModePassword": {
+            "Description": "Password of Microsoft Active Directory safe mode password. Example: Passw0rd1#@1234",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true",
+            "MinLength": 12
+        },
+        "ADSafeModePasswordConfirm": {
+            "Description": "Password of Microsoft Active Directory safe mode password. Example: Passw0rd1#@1234",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true",
+            "MinLength": 12
+        },
+        "ADDomainName": {
+            "Description": "Microsoft Active Directory domain name. Example: contoso.com",
+            "Type": "String",
+            "Default": "contoso.com"
+        },
+        "ADNetBiosName": {
+            "Description": "Microsoft Active Directory netbios name. Example: CONTOSO",
+            "Type": "String",
+            "Default": "CONTOSO"
+        },
+        "MicrosoftADConfirmationCheck": {
+            "Description": "Yes or No value. If you wish to setup Microsoft AD within your TPP install, set this to yes. If you don't, which means you only want to use local users, set this as No.",
+            "Type": "String",
+            "Default": "Yes",
+            "AllowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
         "DBAllocatedStorage": {
             "Description": "Allocated Storage for Microsoft SQL server. (GB)",
             "ConstraintDescription": "Allocated Storage must be numeric and between 20 and 16384.",
@@ -202,8 +326,10 @@
             ]
         },
         "DBMasterUsername": {
+            "AllowedPattern": "^[a-z0-9]+$",
             "Description": "Username for master account on Microsoft SQL server.",
-            "Type": "String"
+            "Type": "String",
+            "MaxLength": 16
         },
         "DBMasterUserPassword": {
             "Description": "Password for master account on Microsoft SQL server.",
@@ -222,8 +348,10 @@
             "NoEcho": "true"
         },
         "DBServiceUsername": {
+            "AllowedPattern": "^[a-z0-9]+$",
             "Description": "Username for service user on Microsoft SQL server.",
-            "Type": "String"
+            "Type": "String",
+            "MaxLength": 16
         },
         "DBServiceUserPassword": {
             "Description": "Password for service user on Microsoft SQL server.",
@@ -341,6 +469,40 @@
         }
     },
     "Rules": {
+        "matchPasswordsADAccount": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "ADAccountPassword"
+                            },
+                            {
+                                "Ref": "ADAccountPasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Active Directory service account password does not match."
+                }
+            ]
+        },
+        "matchPasswordsADSafeMode": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "ADSafeModePassword"
+                            },
+                            {
+                                "Ref": "ADSafeModePasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Active Directory safe mode password does not match."
+                }
+            ]
+        },
         "matchPasswordsDBMaster": {
             "Assertions": [
                 {
@@ -448,6 +610,15 @@
             "Properties": {
                 "TemplateURL": "https://venafi-tpp-automation.s3.amazonaws.com/templates/nested-novpc-tpp.json",
                 "Parameters": {
+                    "GitHubAccount": {
+                        "Ref": "GitHubAccount"
+                    },
+                    "GitHubBranch": {
+                        "Ref": "GitHubBranch"
+                    },
+                    "GitHubRepository": {
+                        "Ref": "GitHubRepository"
+                    },
                     "KeyName": {
                         "Ref": "KeyName"
                     },
@@ -477,6 +648,30 @@
                             "VPCStack",
                             "Outputs.VPCID"
                         ]
+                    },
+                    "MicrosoftADConfirmationCheck": {
+                        "Ref": "MicrosoftADConfirmationCheck"
+                    },
+                    "ADAccountUsername": {
+                        "Ref": "ADAccountUsername"
+                    },
+                    "ADAccountPassword": {
+                        "Ref": "ADAccountPassword"
+                    },
+                    "ADAccountPasswordConfirm": {
+                        "Ref": "ADAccountPasswordConfirm"
+                    },
+                    "ADSafeModePassword": {
+                        "Ref": "ADSafeModePassword"
+                    },
+                    "ADSafeModePasswordConfirm": {
+                        "Ref": "ADSafeModePasswordConfirm"
+                    },
+                    "ADDomainName": {
+                        "Ref": "ADDomainName"
+                    },
+                    "ADNetBiosName": {
+                        "Ref": "ADNetBiosName"
                     },
                     "DBAllocatedStorage": {
                         "Ref": "DBAllocatedStorage"

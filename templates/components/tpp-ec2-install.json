@@ -6,6 +6,16 @@
             "ParameterGroups": [
                 {
                     "Label": {
+                        "default": "General Configuration"
+                    },
+                    "Parameters": [
+                        "GitHubAccount",
+                        "GitHubBranch",
+                        "GitHubRepository"
+                    ]
+                },
+                {
+                    "Label": {
                         "default": "Network Configuration"
                     },
                     "Parameters": [
@@ -14,6 +24,21 @@
                         "PublicSubnet01ID",
                         "VpcCidrBlock",
                         "VpcId"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Microsoft AD setup"
+                    },
+                    "Parameters": [
+                        "MicrosoftADConfirmationCheck",
+                        "ADAccountUsername",
+                        "ADAccountPassword",
+                        "ADAccountPasswordConfirm",
+                        "ADSafeModePassword",
+                        "ADSafeModePasswordConfirm",
+                        "ADDomainName",
+                        "ADNetBiosName"
                     ]
                 },
                 {
@@ -51,6 +76,15 @@
                 }
             ],
             "ParameterLabels": {
+                "GitHubAccount": {
+                    "default": "GitHub Account Name: "  
+                },
+                "GitHubBranch": {
+                    "default": "GitHub Branch Name: "
+                },
+                "GitHubRepository": {
+                    "default": "GitHub Repository Name: "
+                },
                 "KeyName": {
                     "default": "Key pair to access EC2 instance: "
                 },
@@ -65,6 +99,30 @@
                 },
                 "VpcId": {
                     "default": "ID of VPC: "
+                },
+                "MicrosoftADConfirmationCheck": {
+                    "default": "Install Microsoft AD confirmation: "
+                },
+                "ADAccountUsername": {
+                    "default": "Microsoft Active Directory User: "
+                },
+                "ADAccountPassword": {
+                    "default": "Microsoft Active Directory Password: "
+                },
+                "ADAccountPasswordConfirm": {
+                    "default": "Microsoft Active Directory Password: (Confirm) "
+                },
+                "ADSafeModePassword": {
+                    "default": "Microsoft AD safe mode recovery password: "
+                },
+                "ADSafeModePasswordConfirm": {
+                    "default": "Microsoft AD safe mode recovery password (Confirm): "
+                },
+                "ADDomainName": {
+                    "default": "Microsoft Active Directory domain name: "
+                },
+                "ADNetBiosName": {
+                    "default": "Microsoft Active Directory netbios name: "
                 },
                 "DBMasterUsername": {
                     "default": "DBMasterUsername: "
@@ -127,6 +185,21 @@
         }
     },
     "Parameters": {
+        "GitHubAccount": {
+            "Description": "GitHub account name housing TPPAutomation repository",
+            "Type": "String",
+            "Default": "cdmadrigal"
+        },
+        "GitHubBranch": {
+            "Description": "GitHub repository branch name. Examples: 'v0.1', 'dev",
+            "Type": "String",
+            "Default": "master"
+        },
+        "GitHubRepository": {
+            "Description": "Repository name where your project is stored. Example: 'TPPRepository'",
+            "Type": "String",
+            "Default": "TPPAutomation"
+        },
         "KeyName": {
             "Type": "AWS::EC2::KeyPair::KeyName",
             "Description": "The EC2 Key Pair to allow SSH access to the instances."
@@ -150,9 +223,63 @@
             "Description": "ID of your existing VPC.",
             "Type": "AWS::EC2::VPC::Id"
         },
+        "ADAccountUsername": {
+            "Description": "Username of Microsoft Active Directory user.",
+            "Type": "String",
+            "Default": "aduser"
+        },
+        "ADAccountPassword": {
+            "Description": "Password of Microsoft Active Directory user. Example: Passw0rd1#@3451",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true",
+            "MinLength": 12
+        },
+        "ADAccountPasswordConfirm": {
+            "Description": "Password of Microsoft Active Directory user (Confirmation). Example: Passw0rd1#@3451",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true",
+            "MinLength": 12
+        },
+        "ADSafeModePassword": {
+            "Description": "Password of Microsoft Active Directory safe mode password. Example: Passw0rd1#@1234",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true",
+            "MinLength": 12
+        },
+        "ADSafeModePasswordConfirm": {
+            "Description": "Password of Microsoft Active Directory safe mode password (Confirmation). Example: Passw0rd1#@1234",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true",
+            "MinLength": 12
+        },
+        "ADDomainName": {
+            "Description": "Microsoft Active Directory domain name. Example: contoso.com",
+            "Type": "String",
+            "Default": "contoso.com"
+        },
+        "ADNetBiosName": {
+            "Description": "Microsoft Active Directory netbios name. Example: CONTOSO",
+            "Type": "String",
+            "Default": "CONTOSO"
+        },
+        "MicrosoftADConfirmationCheck": {
+            "Description": "Yes or No value. If you wish to setup Microsoft AD within your TPP install, set this to yes. If you don't, which means you only want to use local users, set this as No.",
+            "Type": "String",
+            "Default": "Yes",
+            "AllowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
         "DBMasterUsername": {
+            "AllowedPattern": "^[a-z0-9]+$",
             "Description": "Username for master account on Microsoft SQL server.",
-            "Type": "String"
+            "Type": "String",
+            "MaxLength": 16
         },
         "DBMasterUserPassword": {
             "Description": "Password for master account on Microsoft SQL server.",
@@ -171,10 +298,13 @@
             "NoEcho": "true"
         },
         "DBServiceUsername": {
+            "AllowedPattern": "^[a-z0-9]+$",
             "Description": "Username for service user on Microsoft SQL server.",
-            "Type": "String"
+            "Type": "String",
+            "MaxLength": 16
         },
         "DBServiceUserPassword": {
+            "AllowedPattern": "^[a-zA-Z0-9]+$",
             "Description": "Password for service user on Microsoft SQL server.",
             "ConstraintDescription": "Must be between 8 to 128 alphanumeric characters.",
             "Type": "String",
@@ -183,6 +313,7 @@
             "NoEcho": "true"
         },
         "DBServiceUserPasswordConfirm": {
+            "AllowedPattern": "^[a-zA-Z0-9]+$",
             "Description": "Confirmation of Password of service user on Microsoft SQL server.",
             "ConstraintDescription": "Must be between 8 to 128 alphanumeric characters.",
             "Type": "String",
@@ -322,6 +453,40 @@
                 }
             ]
         },
+        "matchPasswordsADAccount": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "ADAccountPassword"
+                            },
+                            {
+                                "Ref": "ADAccountPasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Active Directory service account password does not match."
+                }
+            ]
+        },
+        "matchPasswordsADSafeMode": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "ADSafeModePassword"
+                            },
+                            {
+                                "Ref": "ADSafeModePasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Active Directory safe mode password does not match."
+                }
+            ]
+        },
         "matchPasswordsDBMaster": {
             "Assertions": [
                 {
@@ -399,6 +564,14 @@
                 },
                 "No"
             ]
+        },
+        "MicrosoftADCheck": {
+            "Fn::Equals": [
+                {
+                    "Ref": "MicrosoftADConfirmationCheck"
+                },
+                "Yes"
+            ]
         }
     },
     "Resources": {
@@ -474,7 +647,94 @@
                     },
                     "initialSetup": {
                         "commands": {
-                            "01_db_create": {
+                            "01_ad-cs-download": {
+                                "command": {
+                                    "Fn::If": [
+                                        "MicrosoftADCheck",
+                                        {
+                                            "Fn::Sub": "powershell -Command \"& { iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/add-ADDSPrereqs.ps1' -OutFile add-ADDSPrereqs.ps1 } | { iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/add-ADFeatures.ps1' -OutFile add-ADFeatures.ps1 } | { iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/CreateLocalADUser.ps1' -OutFile CreateLocalADUser.ps1 } | { iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/install_adcs.ps1' -OutFile install_adcs.ps1 } | { iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/InstallNewForest.ps1' -OutFile InstallNewForest.ps1 }\""
+                                        },
+                                        "echo 'Microsoft AD scripts will not be downloaded...'"
+                                    ]
+                                },
+                                "cwd": "C:\\Users\\Administrator\\Downloads"
+                            },
+                            "02_ad-cs-file-changes": {
+                                "command": {
+                                    "Fn::If": [
+                                        "MicrosoftADCheck",
+                                        {
+                                            "Fn::Sub": "powershell -Command \"(get-content 'CreateLocalADUser.ps1') | ForEach-Object {$_ -replace \\\"ADUSERPASSWORD\\\",\\\"${ADAccountPassword}\\\"} | ForEach-Object {$_ -replace \\\"ADUSER\\\",\\\"${ADAccountUsername}\\\"} | set-content 'CreateLocalADUser.ps1'\""
+                                        },
+                                        "echo 'Skipping AD setup...'"
+                                    ]
+                                },
+                                "cwd": "C:\\Users\\Administrator\\Downloads"
+                            },
+                            "03_ad-cs-forest-changes": {
+                                "command": {
+                                    "Fn::If": [
+                                        "MicrosoftADCheck",
+                                        {
+                                            "Fn::Sub": "powershell -Command \"(get-content 'InstallNewForest.ps1') | ForEach-Object {$_ -replace \\\"ADSAFEMODEPASSWORD\\\",\\\"${ADSafeModePassword}\\\"} | ForEach-Object {$_ -replace \\\"ADDOMAINNAME\\\",\\\"${ADDomainName}\\\"} | ForEach-Object {$_ -replace \\\"ADNETBIOSNAME\\\",\\\"${ADNetBiosName}\\\"} | set-content 'InstallNewForest.ps1'\""
+                                        },
+                                        "echo 'Skipping AD setup...'"
+                                    ]
+                                },
+                                "cwd": "C:\\Users\\Administrator\\Downloads"
+                            },
+                            "04_ad-cs-add-addsprereqs": {
+                                "command": {
+                                    "Fn::If": [
+                                        "MicrosoftADCheck",
+                                        "powershell -File add-ADDSPrereqs.ps1",
+                                        "echo 'Skipping AD setup...'"
+                                    ]
+                                },
+                                "cwd": "C:\\Users\\Administrator\\Downloads"
+                            },
+                            "05_ad-cs-add-adfeatures": {
+                                "command": {
+                                    "Fn::If": [
+                                        "MicrosoftADCheck",
+                                        "powershell -File add-ADFeatures.ps1",
+                                        "echo 'Skipping AD setup...'"
+                                    ]
+                                },
+                                "cwd": "C:\\Users\\Administrator\\Downloads"
+                            },
+                            "06_ad-cs-installnewforest": {
+                                "command": {
+                                    "Fn::If": [
+                                        "MicrosoftADCheck",
+                                        "powershell -File InstallNewForest.ps1",
+                                        "echo 'Skipping AD setup...'"
+                                    ]
+                                },
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "forever"
+                            },
+                            "07_ad-cs-add-cert-authority": {
+                                "command": {
+                                    "Fn::If": [
+                                        "MicrosoftADCheck",
+                                        "powershell -Command Add-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools",
+                                        "echo 'Skipping AD setup...'"
+                                    ]
+                                }
+                            },
+                            "08_ad-cs-addgroup": {
+                                "command": {
+                                    "Fn::If": [
+                                        "MicrosoftADCheck",
+                                        {
+                                            "Fn::Sub": "powershell -Command Add-ADGroupMember -identity \"Domain Admins\" -members \"${ADAccountUsername}\"; Add-ADGroupMember -identity \"Enterprise Admins\" -members \"${ADAccountUsername}\""
+                                        },
+                                        "echo 'Skipping AD setup...'"
+                                    ]
+                                }
+                            },
+                            "09_db_create": {
                                 "command": {
                                     "Fn::If": [
                                         "DBSnapshotCheck",
@@ -485,7 +745,7 @@
                                     ]
                                 }
                             },
-                            "02_user-create": {
+                            "10_user-create": {
                                 "command": {
                                     "Fn::If": [
                                         "DBSnapshotCheck",
@@ -496,15 +756,15 @@
                                     ]
                                 }
                             },
-                            "03_download-tpp": {
+                            "11_download-tpp": {
                                 "command": {
                                     "Fn::Sub": "powershell -Command [system.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://download.venafi.com/Trust Protection Platform/Current/19.4.0/Venafi Trust Protection Platform 19.4.0.zip' -Headers @{ Authorization = \\\"Basic $([System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes(\\\"${VenafiUserLogin}:${VenafiUserPass}\\\")))\\\" } -OutFile 'Venafi Trust Protection Platform 19.4.0.zip'"
                                 }
                             },
-                            "04_unzip-tpp": {
+                            "12_unzip-tpp": {
                                 "command": "powershell -Command Expand-Archive -LiteralPath 'C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0.zip'"
                             },
-                            "05_create-tppdb": {
+                            "13_create-tppdb": {
                                 "command": {
                                     "Fn::If": [
                                         "DBSnapshotCheck",
@@ -515,7 +775,7 @@
                                     ]
                                 }
                             },
-                            "06_modify-grants-script": {
+                            "14_modify-grants-script": {
                                 "command": {
                                     "Fn::If": [
                                         "DBSnapshotCheck",
@@ -526,7 +786,7 @@
                                     ]
                                 }
                             },
-                            "07_run-grants-script": {
+                            "15_run-grants-script": {
                                 "command": {
                                     "Fn::If": [
                                         "DBSnapshotCheck",
@@ -537,34 +797,34 @@
                                     ]
                                 }
                             },
-                            "08_install-net-framework-4.7.2": {
+                            "16_install-net-framework-4.7.2": {
                                 "command": "NDP472-KB4054531-Web.exe /install /q ",
                                 "cwd": "C:\\Users\\Administrator\\Downloads",
                                 "waitAfterCompletion": "forever"
                             },
-                            "09_install-IIS": {
+                            "17_install-IIS": {
                                 "command": "powershell -Command Install-WindowsFeature -name Web-Server -IncludeManagementTools"
                             },
-                            "10_install-IIS-rewrite": {
+                            "18_install-IIS-rewrite": {
                                 "command": "msiexec /i rewrite_amd64.msi /q",
                                 "cwd": "C:\\Users\\Administrator\\Downloads"
                             },
-                            "11_install-IIS-extension": {
+                            "19_install-IIS-extension": {
                                 "command": "powershell -Command Enable-WindowsOptionalFeature -Online -FeatureName IIS-ApplicationDevelopment; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ApplicationInit; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ISAPIExtensions; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ASP; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ISAPIFilter; Enable-WindowsOptionalFeature -Online -FeatureName IIS-WebSockets; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ServerSideIncludes"
                             },
-                            "12_enable-IIS-extension": {
+                            "20_enable-IIS-extension": {
                                 "command": "dism /online /enable-feature /all /featurename:IIS-ASPNET45"
                             },
-                            "13_install-msi": {
+                            "21_install-msi": {
                                 "command": "msiexec /i VenafiTPPInstallx64.msi /q /n",
                                 "cwd": "C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0"
                             },
-                            "14_replace-answerfile":{
+                            "22_replace-answerfile":{
                                 "command": {
                                     "Fn::Sub": "powershell -Command \"(get-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml') | ForEach-Object {$_ -replace \\\"DB_URL\\\",\\\"${DBUrlEndpoint}\\\"} | ForEach-Object {$_ -replace \\\"DB_PORT\\\",\\\"${DBPort}\\\"} | ForEach-Object {$_ -replace \\\"DB_USER\\\",\\\"${DBServiceUsername}\\\"} | ForEach-Object {$_ -replace \\\"DB_PASS\\\",\\\"${DBServiceUserPassword}\\\"} | ForEach-Object {$_ -replace \\\"TPP_ADMIN\\\",\\\"${TPPAdminAccount}\\\"} | ForEach-Object {$_ -replace \\\"TPP_PASS\\\",\\\"${TPPAdminAccountPassword}\\\"} | set-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml'\""
                                 }
                             },
-                            "15_install-tpp": {
+                            "23_install-tpp": {
                                 "command": {
                                     "Fn::If": [
                                         "DBSnapshotCheck",
