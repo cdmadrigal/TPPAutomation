@@ -108,25 +108,25 @@
                     "default": "Install Microsoft AD confirmation: "
                 },
                 "ADAccountUsername": {
-                    "default": "Microsoft Active Directory User: "
+                    "default": "Microsoft AD User: "
                 },
                 "ADAccountPassword": {
-                    "default": "Microsoft Active Directory Password: "
+                    "default": "Microsoft AD Password: "
                 },
                 "ADAccountPasswordConfirm": {
-                    "default": "Microsoft Active Directory Password: (Confirm) "
+                    "default": "Microsoft AD Password: (Confirm) "
                 },
                 "ADSafeModePassword": {
-                    "default": "Microsoft Active Directory safe mode recovery password: "
+                    "default": "Microsoft AD safe mode recovery password: "
                 },
                 "ADSafeModePasswordConfirm": {
                     "default": "Microsoft AD safe mode recovery password (Confirm): "
                 },
                 "ADDomainName": {
-                    "default": "Microsoft Active Directory domain name: "
+                    "default": "Microsoft AD domain name: "
                 },
                 "ADNetBiosName": {
-                    "default": "Microsoft Active Directory netbios name: "
+                    "default": "Microsoft AD netbios name: "
                 },
                 "DBAllocatedStorage": {
                     "default": "Size of Microsoft SQL server: "
@@ -135,22 +135,22 @@
                     "default": "Microsoft SQL server class type: "
                 },
                 "DBMasterUsername": {
-                    "default": "DBMasterUsername: "
+                    "default": "DB Master Username: "
                 },
                 "DBMasterUserPassword": {
-                    "default": "DBMasterPassword "
+                    "default": "DB Master User Password "
                 },
                 "DBMasterUserPasswordConfirm": {
-                    "default": "DBMasterPassword (Confirm): "
+                    "default": "DB Master User Password (Confirm): "
                 },
                 "DBServiceUsername": {
-                    "default": "DBServiceUsername: "
+                    "default": "DB Service Username: "
                 },
                 "DBServiceUserPassword": {
-                    "default": "DBServiceUserPassword: "
+                    "default": "DB Service User Password: "
                 },
                 "DBServiceUserPasswordConfirm": {
-                    "default": "DBServiceUserPassword (Confirm): "
+                    "default": "DB Service User Password (Confirm): "
                 },
                 "DBSnapshotID": {
                     "default": "Snapshot ID: "
@@ -174,7 +174,7 @@
                     "default": "Instance Type of TPP server: "
                 },
                 "TPPVolSize": {
-                    "default": "Volume size of TPP server instance: "
+                    "default": "Volume size of TPP server: "
                 },
                 "VenafiUserLogin": {
                     "default": "Venafi account username: "
@@ -237,31 +237,36 @@
             "Default": "aduser"
         },
         "ADAccountPassword": {
+            "AllowedPattern": "^$|^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,}$",
             "Description": "Password of Microsoft Active Directory user. Example: Passw0rd1#@3451",
             "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
             "Type": "String",
-            "NoEcho": "true"
+            "NoEcho": "true",
+            "Default": ""
         },
         "ADAccountPasswordConfirm": {
+            "AllowedPattern": "^$|^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,}$",
             "Description": "Password of Microsoft Active Directory user (Confirmation). Example: Passw0rd1#@3451",
             "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
             "Type": "String",
             "NoEcho": "true",
-            "MinLength": 12
+            "Default": ""
         },
         "ADSafeModePassword": {
+            "AllowedPattern": "^$|^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,}$",
             "Description": "Password of Microsoft Active Directory safe mode password. Example: Passw0rd1#@1234",
             "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
             "Type": "String",
             "NoEcho": "true",
-            "MinLength": 12
+            "Default": ""
         },
         "ADSafeModePasswordConfirm": {
+            "AllowedPattern": "^$|^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,}$",
             "Description": "Password of Microsoft Active Directory safe mode password. Example: Passw0rd1#@1234",
             "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
             "Type": "String",
             "NoEcho": "true",
-            "MinLength": 12
+            "Default": ""
         },
         "ADDomainName": {
             "Description": "Microsoft Active Directory domain name. Example: contoso.com",
@@ -313,7 +318,7 @@
         },
         "DBMasterUserPassword": {
             "Description": "Password for master account on Microsoft SQL server.",
-            "ConstraintDescription": "Must be between 8 to 41 alphanumeric charecters.",
+            "ConstraintDescription": "Must be between 8 to 41 alphanumeric characters.",
             "Type": "String",
             "MaxLength": 41,
             "MinLength": 8,
@@ -321,7 +326,7 @@
         },
         "DBMasterUserPasswordConfirm": {
             "Description": "Confirmation of Password of master account on Microsoft SQL server.",
-            "ConstraintDescription": "Must be between 8 to 41 alphanumeric charecters.",
+            "ConstraintDescription": "Must be between 8 to 41 alphanumeric characters.",
             "Type": "String",
             "MaxLength": 41,
             "MinLength": 8,
@@ -359,6 +364,7 @@
             "Type": "String"
         },
         "TPPAdminAccountPassword": {
+            "AllowedPattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{12,}$",
             "Description": "Password for TPP administrator account. Must contain a lowercase, uppercase, digit and be longer than 12 characters.",
             "ConstraintDescription": "Password must contain a lowercase, uppercase, digit and be longer than 12 characters.",
             "Type": "String",
@@ -366,6 +372,7 @@
             "NoEcho": "true"
         },
         "TPPAdminAccountPasswordConfirm": {
+            "AllowedPattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{12,}$",
             "Description": "Password for TPP administrator account (Confirm). Must contain a lowercase, uppercase, digit and be longer than 12 characters.",
             "ConstraintDescription": "Password must contain a lowercase, uppercase, digit and be longer than 12 characters.",
             "Type": "String",
@@ -589,7 +596,7 @@
         "DBStack": {
             "Type": "AWS::CloudFormation::Stack",
             "Properties": {
-                "TemplateURL": "https://venafi-tpp-automation.s3.amazonaws.com/templates/msql-db-install.json",
+                "TemplateURL": "https://venafi-tpp-automation.s3.amazonaws.com/beta-features/templates/msql-db-install.json",
                 "Parameters": {
                     "PrivateSubnet01ID": {
                         "Ref": "PrivateSubnet01ID"
@@ -627,7 +634,7 @@
         "TPPStack": {
             "Type": "AWS::CloudFormation::Stack",
             "Properties": {
-                "TemplateURL": "https://venafi-tpp-automation.s3.amazonaws.com/templates/tpp-ec2-install.json",
+                "TemplateURL": "https://venafi-tpp-automation.s3.amazonaws.com/beta-features/templates/tpp-ec2-install.json",
                 "Parameters": {
                     "GitHubAccount": {
                         "Ref": "GitHubAccount"

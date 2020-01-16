@@ -1,5 +1,4 @@
 ﻿#install roles and features
-
 $featureLogPath = "c:\poshlog\featurelog.txt"
 New-Item $featureLogPath -ItemType file -Force
 $addsTools = "RSAT-AD-Tools"

@@ -8,6 +8,11 @@ Often times when we show TPP demos on AWS we use pre build AMIs that have all th
 - This fits the DevOps story. Spin up and destroy TPP instances with a template without much setup (Only entering a few parameters). Automate everything.
 - You need short lived, test TPP environments.
 
+This setup currently supports the following:
+- Creation of a new MSSQL RDS instance or restoration from an existing snapshot.
+- 90% of the Microsoft AD setup for TPP. The final 10% is a manual process that can't be avoided.
+- Creation of a TPP server, this can either be added to an existing TPP cluster or brand new one.
+
 ## Getting Started
 A few things you will need to run through this:
 
@@ -18,6 +23,9 @@ A few things you will need to run through this:
 - A VPC with at least 2 public subnets and 2 private subnets.
 
 ## Navigating this Repository
-The repository has a template folder has everything you need to deploy a TPP server from end to end. These templates are broken apart so you can deploy individual components seperately. 
+The repository has a template folder that stores two nested templates, one for a deployment with an existing VPC and one for a deployment with a new VPC. Within the template folder, there's a subcomponents folder that contains templates for the MSSQL and EC2-TPP deployment. These are used by the nested templates to deploy all the artifacts and services.
 
-There's a more indepth README file in the templates folder with deployment instructions.
+There is also a folder with various powershell scripts. At the moment all of these scripts are used only when you are setting up Microsoft AD, in the future as these templates grow more powershell scripts will be added.
+
+A sample answerfile exists that can be used edited and used to deploy your TPP instance. Keep proper XML formatting and don't introduce whitespace.
+
