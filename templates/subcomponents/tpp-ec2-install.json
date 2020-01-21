@@ -641,247 +641,273 @@
             "Metadata": {
                 "AWS::CloudFormation::Init": {
                     "configSets": {
-                        "fullInstallSetup": [
-                            "initialSetup",
-                            "endMessage"
+                        "fullInstallNewDB-AD-Master": [
+                            "dependencySetup",
+                            "adInstallSetup",
+                            "mssqlDBSetup",
+                            "installTPPclean",
+                            "signalComplete"
                         ],
-                        "cfnInitEnd": [
-                            "endMessage"
+                        "fullInstallNewDB-Master": [
+                            "dependencySetup",
+                            "mssqlDBSetup",
+                            "installTPPclean",
+                            "signalComplete"
+                        ],
+                        "fullInstallExistingDB-Master": [
+                            "dependencySetup",
+                            "installTPP-NoDBSetup",
+                            "signalComplete"
+                        ],
+                        "fullInstallExistingDB-AD-Master": [
+                            "dependencySetup",
+                            "adInstallSetup",
+                            "installTPP-NoDBSetup",
+                            "signalComplete"
                         ]
                     },
-                    "initialSetup": {
+                    "adInstallSetup": {
                         "commands": {
                             "01_ad-cs-download": {
                                 "command": {
-                                    "Fn::If": [
-                                        "MicrosoftADCheck",
-                                        {
-                                            "Fn::Sub": "powershell -Command \"& { iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/add-ADDSPrereqs.ps1' -OutFile add-ADDSPrereqs.ps1 }\" ; \"&{ iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/add-ADFeatures.ps1' -OutFile add-ADFeatures.ps1 }\" ; \"&{ iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/CreateLocalADUser.ps1' -OutFile CreateLocalADUser.ps1 }\" ; \"& { iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/install_adcs.ps1' -OutFile install_adcs.ps1 }\" ; \"& { iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/InstallNewForest.ps1' -OutFile InstallNewForest.ps1 }\""
-                                        },
-                                        "echo 'Microsoft AD scripts will not be downloaded...'"
-                                    ]
+                                    "Fn::Sub": "powershell -Command \"& { iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/add-ADDSPrereqs.ps1' -OutFile add-ADDSPrereqs.ps1 }\" ; \"&{ iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/add-ADFeatures.ps1' -OutFile add-ADFeatures.ps1 }\" ; \"&{ iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/CreateLocalADUser.ps1' -OutFile CreateLocalADUser.ps1 }\" ; \"& { iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/install_adcs.ps1' -OutFile install_adcs.ps1 }\" ; \"& { iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/InstallNewForest.ps1' -OutFile InstallNewForest.ps1 }\""
                                 },
                                 "cwd": "C:\\Users\\Administrator\\Downloads",
                                 "waitAfterCompletion": "0"
                             },
                             "02_ad-cs-file-changes": {
                                 "command": {
-                                    "Fn::If": [
-                                        "MicrosoftADCheck",
-                                        {
-                                            "Fn::Sub": "powershell -Command \"(get-content 'CreateLocalADUser.ps1') | ForEach-Object {$_ -replace \\\"ADUSERPASSWORD\\\",\\\"${ADAccountPassword}\\\"} | ForEach-Object {$_ -replace \\\"ADUSER\\\",\\\"${ADAccountUsername}\\\"} | set-content 'CreateLocalADUser.ps1'\""
-                                        },
-                                        "echo 'Skipping AD setup...'"
-                                    ]
+                                    "Fn::Sub": "powershell -Command \"(get-content 'CreateLocalADUser.ps1') | ForEach-Object {$_ -replace \\\"ADUSERPASSWORD\\\",\\\"${ADAccountPassword}\\\"} | ForEach-Object {$_ -replace \\\"ADUSER\\\",\\\"${ADAccountUsername}\\\"} | set-content 'CreateLocalADUser.ps1'\""
                                 },
                                 "cwd": "C:\\Users\\Administrator\\Downloads",
                                 "waitAfterCompletion": "0"
                             },
                             "03_ad-cs-createlocaluser": {
-                                "command": {
-                                    "Fn::If": [
-                                        "MicrosoftADCheck",
-                                        "powershell -File CreateLocalADUser.ps1",
-                                        "echo 'Skipping AD setup...'"
-                                    ]
-                                },
+                                "command": "powershell -File CreateLocalADUser.ps1",
                                 "cwd": "C:\\Users\\Administrator\\Downloads",
                                 "waitAfterCompletion": "0"
                             },
                             "04_ad-cs-forest-changes": {
                                 "command": {
-                                    "Fn::If": [
-                                        "MicrosoftADCheck",
-                                        {
-                                            "Fn::Sub": "powershell -Command \"(get-content 'InstallNewForest.ps1') | ForEach-Object {$_ -replace \\\"ADSAFEMODEPASSWORD\\\",\\\"${ADSafeModePassword}\\\"} | ForEach-Object {$_ -replace \\\"ADDOMAINNAME\\\",\\\"${ADDomainName}\\\"} | ForEach-Object {$_ -replace \\\"ADNETBIOSNAME\\\",\\\"${ADNetBiosName}\\\"} | set-content 'InstallNewForest.ps1'\""
-                                        },
-                                        "echo 'Skipping AD setup...'"
-                                    ]
+                                    "Fn::Sub": "powershell -Command \"(get-content 'InstallNewForest.ps1') | ForEach-Object {$_ -replace \\\"ADSAFEMODEPASSWORD\\\",\\\"${ADSafeModePassword}\\\"} | ForEach-Object {$_ -replace \\\"ADDOMAINNAME\\\",\\\"${ADDomainName}\\\"} | ForEach-Object {$_ -replace \\\"ADNETBIOSNAME\\\",\\\"${ADNetBiosName}\\\"} | set-content 'InstallNewForest.ps1'\""
                                 },
                                 "cwd": "C:\\Users\\Administrator\\Downloads",
                                 "waitAfterCompletion": "0"
                             },
                             "05_ad-cs-add-addsprereqs": {
-                                "command": {
-                                    "Fn::If": [
-                                        "MicrosoftADCheck",
-                                        "powershell -File add-ADDSPrereqs.ps1",
-                                        "echo 'Skipping AD setup...'"
-                                    ]
-                                },
+                                "command": "powershell -File add-ADDSPrereqs.ps1",
                                 "cwd": "C:\\Users\\Administrator\\Downloads",
                                 "waitAfterCompletion": "forever"
                             },
                             "06_ad-cs-add-adfeatures": {
-                                "command": {
-                                    "Fn::If": [
-                                        "MicrosoftADCheck",
-                                        "powershell -File add-ADFeatures.ps1",
-                                        "echo 'Skipping AD setup...'"
-                                    ]
-                                },
+                                "command": "powershell -File add-ADFeatures.ps1",
                                 "cwd": "C:\\Users\\Administrator\\Downloads",
                                 "waitAfterCompletion": "0"
                             },
                             "07_ad-cs-installnewforest": {
-                                "command": {
-                                    "Fn::If": [
-                                        "MicrosoftADCheck",
-                                        "powershell -File InstallNewForest.ps1",
-                                        "echo 'Skipping AD setup...'"
-                                    ]
-                                },
+                                "command": "powershell -File InstallNewForest.ps1",
                                 "cwd": "C:\\Users\\Administrator\\Downloads",
                                 "waitAfterCompletion": "forever"
                             },
-                            "08_ad-cs-add-cert-authority": {     
-                                "command": {
-                                    "Fn::If": [
-                                        "MicrosoftADCheck",
-                                        "powershell -Command Add-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools",
-                                        "echo 'Skipping AD setup...'"
-                                    ]
-                                }
+                            "08_ad-cs-add-cert-authority": {
+                                "command": "powershell -Command Add-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools"
                             },
                             "09_ad-cs-addgroup": {
                                 "command": {
-                                    "Fn::If": [
-                                        "MicrosoftADCheck",
-                                        {
-                                            "Fn::Sub": "powershell -Command Add-ADGroupMember -identity 'Domain Admins' -members \"${ADAccountUsername}\"; Add-ADGroupMember -identity 'Enterprise Admins' -members \"${ADAccountUsername}\""
-                                        },
-                                        "echo 'Skipping AD setup...'"
-                                    ]
+                                    "Fn::Sub": "powershell -Command Add-ADGroupMember -identity 'Domain Admins' -members \"${ADAccountUsername}\"; Add-ADGroupMember -identity 'Enterprise Admins' -members \"${ADAccountUsername}\""
                                 }
                             },
                             "10_install-adcs": {
+                                "command": "powershell -File install_adcs.ps1",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            }
+                        }
+                    },
+                    "dependencySetup": {
+                        "commands": {
+                            "01_vc-dist-dl": {
+                                "command": "powershell -command \"& { iwr 'https://aka.ms/vs/16/release/vc_redist.x64.exe' -OutFile vc_redist.x64.exe }\"",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "02_vc-dist-install": {
+                                "command": "vc_redist.x64.exe /install /passive /norestart",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "03_net-framework-dl": {
+                                "command": "powershell -command \"& { iwr http://go.microsoft.com/fwlink/?LinkId=863262 -Outfile NDP472-KB4054531-Web.exe }\"",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "04_md-sources": {
+                                "command": "md C:\\source\\sxs",
+                                "waitAfterCompletion": "0"
+                            },
+                            "05_install-net-framework-core": {
+                                "command": "powershell -command Install-WindowsFeature -Name Net-Framework-Core -Source C:\\source\\sxs",
+                                "waitAfterCompletion": "0"
+                            },
+                            "06_odbc-cli-dl": {
+                                "command": "powershell -command \"& { iwr 'https://download.microsoft.com/download/E/6/B/E6BFDC7A-5BCD-4C51-9912-635646DA801E/en-US/msodbcsql_17.4.2.1_x64.msi' -OutFile msodbcsql_17.4.2.1_x64.msi }\"",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "07_odbc-cli-install": {
+                                "command": "msiexec /quiet /passive /qn /i msodbcsql_17.4.2.1_x64.msi IACCEPTMSODBCSQLLICENSETERMS=YES ADDLOCAL=ALL",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "08_cmd-utils-dl": {
+                                "command": "powershell -command \"& { iwr https://go.microsoft.com/fwlink/?linkid=2082790 -OutFile MsSqlCmdLnUtils.msi }\"",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "09_cmd-utils-install": {
+                                "command": "msiexec /quiet /passive /qn /i MsSqlCmdLnUtils.msi IACCEPTMSSQLCMDLNUTILSLICENSETERMS=YES",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "10_update-path": {
+                                "command": "set PATH=%PATH%;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;",
+                                "waitAfterCompletion": "0"
+                            },
+                            "11_answerfile-dl": {
                                 "command": {
-                                    "Fn::If": [
-                                        "MicrosoftADCheck",
-                                        "powershell -File install_adcs.ps1",
-                                        "echo 'Skipping AD setup...'"
-                                    ]
+                                    "Fn::Sub": "powershell -command \"& { iwr ${TPPAnswerFile} -Outfile answerfile.xml }\""
                                 },
                                 "cwd": "C:\\Users\\Administrator\\Downloads",
                                 "waitAfterCompletion": "0"
                             },
-                            "11_db_create": {
+                            "12_rewrite-dl": {
+                                "command": "powershell -command \"& { iwr https://download.microsoft.com/download/C/9/E/C9E8180D-4E51-40A6-A9BF-776990D8BCA9/rewrite_amd64.msi -Outfile rewrite_amd64.msi }\"",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "13_install-net-framework-4.7.2": {
+                                "command": "NDP472-KB4054531-Web.exe /install /q ",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "forever"
+                            },
+                            "14_install-IIS": {
+                                "command": "powershell -Command Install-WindowsFeature -name Web-Server -IncludeManagementTools",
+                                "waitAfterCompletion": "0"
+                            },
+                            "15_install-IIS-rewrite": {
+                                "command": "msiexec /i rewrite_amd64.msi /q",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "16_install-IIS-extension": {
+                                "command": "powershell -Command Enable-WindowsOptionalFeature -Online -FeatureName IIS-ApplicationDevelopment; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ApplicationInit; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ISAPIExtensions; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ASP; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ISAPIFilter; Enable-WindowsOptionalFeature -Online -FeatureName IIS-WebSockets; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ServerSideIncludes",
+                                "waitAfterCompletion": "0"
+                            },
+                            "17_enable-IIS-extension": {
+                                "command": "dism /online /enable-feature /all /featurename:IIS-ASPNET45",
+                                "waitAfterCompletion": "0"
+                            }
+                        }
+                    },
+                    "mssqlDBSetup": {
+                        "commands": {
+                            "01_db_create": {
                                 "command": {
-                                    "Fn::If": [
-                                        "DBSnapshotCheck",
-                                        {
-                                            "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -Q \"CREATE DATABASE tppdb\""
-                                        },
-                                        "echo 'Skipping DB creation...'"
-                                    ]
+                                    "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -Q \"CREATE DATABASE tppdb\""
                                 },
                                 "waitAfterCompletion": "0"
                             },
-                            "12_user-create": {
+                            "02_user-create": {
                                 "command": {
-                                    "Fn::If": [
-                                        "DBSnapshotCheck",
-                                        {
-                                            "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -Q \"CREATE LOGIN ${DBServiceUsername} WITH PASSWORD = '${DBServiceUserPassword}'; USE tppdb; CREATE USER ${DBServiceUsername} FOR LOGIN ${DBServiceUsername}\""
-                                        },
-                                        "echo 'Skipping user creation...'"
-                                    ]
+                                    "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -Q \"CREATE LOGIN ${DBServiceUsername} WITH PASSWORD = '${DBServiceUserPassword}'; USE tppdb; CREATE USER ${DBServiceUsername} FOR LOGIN ${DBServiceUsername}\""
                                 },
                                 "waitAfterCompletion": "0"
                             },
-                            "13_download-tpp": {
+                            "03_download-tpp": {
                                 "command": {
                                     "Fn::Sub": "powershell -Command [system.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://download.venafi.com/Trust Protection Platform/Current/19.4.0/Venafi Trust Protection Platform 19.4.0.zip' -Headers @{ Authorization = \\\"Basic $([System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes(\\\"${VenafiUserLogin}:${VenafiUserPass}\\\")))\\\" } -OutFile 'Venafi Trust Protection Platform 19.4.0.zip'"
                                 },
                                 "cwd": "C:\\Users\\Administrator\\Downloads",
                                 "waitAfterCompletion": "0"
                             },
-                            "14_unzip-tpp": {
+                            "04_unzip-tpp": {
                                 "command": "powershell -Command Expand-Archive -LiteralPath 'C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0.zip'",
-                                "cwd":"C:\\Users\\Administrator\\Downloads",
-                                "waitAfterCompletion": "0"
-                            },
-                            "15_create-tppdb": {
-                                "command": {
-                                    "Fn::If": [
-                                        "DBSnapshotCheck",
-                                        {
-                                            "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -i \"C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\CreateDB.sql\" -d tppdb"
-                                        },
-                                        "echo 'Skipping creation of tppdb tables...'"
-                                    ]
-                                },
-                                "waitAfterCompletion": "0"
-                            },
-                            "16_modify-grants-script": {
-                                "command": {
-                                    "Fn::If": [
-                                        "DBSnapshotCheck",
-                                        {
-                                            "Fn::Sub": "powershell -Command \"(get-content 'C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\Grants\\sample-grants.sql') | ForEach-Object {$_ -replace \\\"DIRECTOR_RW\\\",\\\"${DBServiceUsername}\\\"} | set-content 'C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\Grants\\sample-grants.sql'\""
-                                        },
-                                        "echo 'Skipping modification of grant scripts...'"
-                                    ]
-                                },
-                                "waitAfterCompletion": "0"
-                            },
-                            "17_run-grants-script": {
-                                "command": {
-                                    "Fn::If": [
-                                        "DBSnapshotCheck",
-                                        {
-                                            "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -i \"C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\Grants\\sample-grants.sql\" -d tppdb"
-                                        },
-                                        "echo 'Skipping running grant scripts...'"
-                                    ]
-                                },
-                                "waitAfterCompletion": "0"
-                            },
-                            "18_install-net-framework-4.7.2": {
-                                "command": "NDP472-KB4054531-Web.exe /install /q ",
-                                "cwd": "C:\\Users\\Administrator\\Downloads",
-                                "waitAfterCompletion": "forever"
-                            },
-                            "19_install-IIS": {
-                                "command": "powershell -Command Install-WindowsFeature -name Web-Server -IncludeManagementTools",
-                                "waitAfterComplition": "0"
-                            },
-                            "20_install-IIS-rewrite": {
-                                "command": "msiexec /i rewrite_amd64.msi /q",
                                 "cwd": "C:\\Users\\Administrator\\Downloads",
                                 "waitAfterCompletion": "0"
                             },
-                            "21_install-IIS-extension": {
-                                "command": "powershell -Command Enable-WindowsOptionalFeature -Online -FeatureName IIS-ApplicationDevelopment; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ApplicationInit; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ISAPIExtensions; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ASP; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ISAPIFilter; Enable-WindowsOptionalFeature -Online -FeatureName IIS-WebSockets; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ServerSideIncludes",
-                                "waitAFterCompletion": "0"
-                            },
-                            "22_enable-IIS-extension": {
-                                "command": "dism /online /enable-feature /all /featurename:IIS-ASPNET45",
+                            "05_create-tppdb": {
+                                "command": {
+                                    "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -i \"C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\CreateDB.sql\" -d tppdb"
+                                },
                                 "waitAfterCompletion": "0"
                             },
-                            "23_install-msi": {
+                            "06_modify-grants-script": {
+                                "command": {
+                                    "Fn::Sub": "powershell -Command \"(get-content 'C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\Grants\\sample-grants.sql') | ForEach-Object {$_ -replace \\\"DIRECTOR_RW\\\",\\\"${DBServiceUsername}\\\"} | set-content 'C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\Grants\\sample-grants.sql'\""
+                                },
+                                "waitAfterCompletion": "0"
+                            },
+                            "07_run-grants-script": {
+                                "command": {
+                                    "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -i \"C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\Grants\\sample-grants.sql\" -d tppdb"
+                                },
+                                "waitAfterCompletion": "0"
+                            }
+                        }
+                    },
+                    "installTPPclean": {
+                        "commands": {
+                            "01_install-msi": {
                                 "command": "msiexec /i VenafiTPPInstallx64.msi /q /n",
                                 "cwd": "C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0",
                                 "waitAfterCompletion": "0"
                             },
-                            "24_replace-answerfile":{
+                            "02_replace-answerfile": {
                                 "command": {
                                     "Fn::Sub": "powershell -Command \"(get-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml') | ForEach-Object {$_ -replace \\\"DB_URL\\\",\\\"${DBUrlEndpoint}\\\"} | ForEach-Object {$_ -replace \\\"DB_PORT\\\",\\\"${DBPort}\\\"} | ForEach-Object {$_ -replace \\\"DB_USER\\\",\\\"${DBServiceUsername}\\\"} | ForEach-Object {$_ -replace \\\"DB_PASS\\\",\\\"${DBServiceUserPassword}\\\"} | ForEach-Object {$_ -replace \\\"TPP_ADMIN\\\",\\\"${TPPAdminAccount}\\\"} | ForEach-Object {$_ -replace \\\"TPP_PASS\\\",\\\"${TPPAdminAccountPassword}\\\"} | set-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml'\""
-                                },
-                                "waitAfterCompletion": "0"
+                                }
                             },
-                            "25_install-tpp": {
-                                "command": {
-                                    "Fn::If": [
-                                        "DBSnapshotCheck",
-                                        "TppConfiguration.exe -install:C:\\Users\\Administrator\\Downloads\\answerfile.xml",
-                                        "TppConfiguration.exe -install:C:\\Users\\Administrator\\Downloads\\answerfile.xml -add"
-                                    ]    
-                                },
+                            "03_install-tpp": {
+                                "command": "TppConfiguration.exe -install:C:\\Users\\Administrator\\Downloads\\answerfile.xml",
                                 "cwd": "C:\\Program Files\\Venafi\\Platform",
                                 "waitAfterCompletion": "0"
+                            }
+                        }
+                    },
+                    "installTPP-NoDBSetup": {
+                        "commands": {
+                            "01_download-tpp": {
+                                "command": {
+                                    "Fn::Sub": "powershell -Command [system.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://download.venafi.com/Trust Protection Platform/Current/19.4.0/Venafi Trust Protection Platform 19.4.0.zip' -Headers @{ Authorization = \\\"Basic $([System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes(\\\"${VenafiUserLogin}:${VenafiUserPass}\\\")))\\\" } -OutFile 'Venafi Trust Protection Platform 19.4.0.zip'"
+                                },
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
                             },
-                            "26_signal-complete": {
+                            "02_unzip-tpp": {
+                                "command": "powershell -Command Expand-Archive -LiteralPath 'C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0.zip'",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "03_install-msi": {
+                                "command": "msiexec /i VenafiTPPInstallx64.msi /q /n",
+                                "cwd": "C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0",
+                                "waitAfterCompletion": "0"
+                            },
+                            "04_replace-answerfile": {
+                                "command": {
+                                    "Fn::Sub": "powershell -Command \"(get-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml') | ForEach-Object {$_ -replace \\\"DB_URL\\\",\\\"${DBUrlEndpoint}\\\"} | ForEach-Object {$_ -replace \\\"DB_PORT\\\",\\\"${DBPort}\\\"} | ForEach-Object {$_ -replace \\\"DB_USER\\\",\\\"${DBServiceUsername}\\\"} | ForEach-Object {$_ -replace \\\"DB_PASS\\\",\\\"${DBServiceUserPassword}\\\"} | ForEach-Object {$_ -replace \\\"TPP_ADMIN\\\",\\\"${TPPAdminAccount}\\\"} | ForEach-Object {$_ -replace \\\"TPP_PASS\\\",\\\"${TPPAdminAccountPassword}\\\"} | set-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml'\""
+                                }
+                            },
+                            "05_install-tpp": {
+                                "command": "TppConfiguration.exe -install:C:\\Users\\Administrator\\Downloads\\answerfile.xml -add",
+                                "cwd": "C:\\Program Files\\Venafi\\Platform",
+                                "waitAfterCompletion": "0"
+                            }
+                        }
+                    },
+                    "signalComplete": {
+                        "commands": {
+                            "01_signal-complete": {
                                 "command": {
                                     "Fn::Join": [
                                         "",
@@ -898,13 +924,6 @@
                                     ]
                                 },
                                 "waitAfterCompletion": "0"
-                            }
-                        }     
-                    },
-                    "endMessage": {
-                        "commands": {
-                            "01_end_Message": {
-                                "command": "echo 'end cfn-init...'"
                             }
                         }
                     }
@@ -952,30 +971,80 @@
                             "",
                             [
                                 "<script>\n",
-                                "cd C:\\Users\\Administrator\\Downloads\n",
-                                "powershell -command \"& { iwr 'https://aka.ms/vs/16/release/vc_redist.x64.exe' -OutFile vc_redist.x64.exe }\"\n",
-                                "vc_redist.x64.exe /install /passive /norestart\n",
-                                "powershell -command \"& { iwr http://go.microsoft.com/fwlink/?LinkId=863262 -Outfile NDP472-KB4054531-Web.exe }\"\n",
-                                "md C:\\source\\sxs\n",
-                                "powershell -command Install-WindowsFeature -Name Net-Framework-Core -Source C:\\source\\sxs\n",
-                                "powershell -command \"& { iwr 'https://download.microsoft.com/download/E/6/B/E6BFDC7A-5BCD-4C51-9912-635646DA801E/en-US/msodbcsql_17.4.2.1_x64.msi' -OutFile msodbcsql_17.4.2.1_x64.msi }\"\n",
-                                "msiexec /quiet /passive /qn /i msodbcsql_17.4.2.1_x64.msi IACCEPTMSODBCSQLLICENSETERMS=YES ADDLOCAL=ALL\n",
-                                "powershell -command \"& { iwr https://go.microsoft.com/fwlink/?linkid=2082790 -OutFile MsSqlCmdLnUtils.msi }\"\n",
-                                "msiexec /quiet /passive /qn /i MsSqlCmdLnUtils.msi IACCEPTMSSQLCMDLNUTILSLICENSETERMS=YES\n",
-                                "set PATH=%PATH%;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;\n",
                                 {
-                                    "Fn::Sub": "powershell -command \"& { iwr ${TPPAnswerFile} -Outfile answerfile.xml }\""
-                                },
-                                "\n",
-                                "powershell -command \"& { iwr https://download.microsoft.com/download/C/9/E/C9E8180D-4E51-40A6-A9BF-776990D8BCA9/rewrite_amd64.msi -Outfile rewrite_amd64.msi }\"\n",
-                                "cfn-init.exe -v -s ", 
-                                {
-                                    "Ref": "AWS::StackId"
-                                },
-                                " -r TPPServer -c fullInstallSetup",
-                                " --region ",
-                                {
-                                    "Ref": "AWS::Region"
+                                    "Fn::If": [
+                                        "DBSnapshotCheck",
+                                        {
+                                            "Fn::If": [
+                                                "MicrosoftADCheck",
+                                                {
+                                                    "Fn::Join": [
+                                                        "",
+                                                        [
+                                                            "cfn-init.exe -v -s ",
+                                                            {
+                                                                "Ref": "AWS::StackId"
+                                                            },
+                                                            " -r TPPServer -c fullInstallNewDB-AD-Master --region ",
+                                                            {
+                                                                "Ref": "AWS::Region"
+                                                            }, "\n"
+                                                        ]
+                                                    ]
+                                                },
+                                                {
+                                                    "Fn::Join": [
+                                                        "",
+                                                        [
+                                                            "cfn-init.exe -v -s ",
+                                                            {
+                                                                "Ref": "AWS::StackId"
+                                                            },
+                                                            " -r TPPServer -c fullInstallNewDB-Master --region ",
+                                                            {
+                                                                "Ref": "AWS::Region"
+                                                            }
+                                                        ]
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "Fn::If": [
+                                                "MicrosoftADCheck",
+                                                {
+                                                    "Fn::Join": [
+                                                        "",
+                                                        [
+                                                            "cfn-init.exe -v -s ",
+                                                            {
+                                                                "Ref": "AWS::StackId"
+                                                            },
+                                                            " -r TPPServer -c fullInstallExistingDB-AD-Master --region ",
+                                                            {
+                                                                "Ref": "AWS::Region"
+                                                            }, "\n"
+                                                        ]
+                                                    ]
+                                                },
+                                                {
+                                                    "Fn::Join": [
+                                                        "",
+                                                        [
+                                                            "cfn-init.exe -v -s ",
+                                                            {
+                                                                "Ref": "AWS::StackId"
+                                                            },
+                                                            " -r TPPServer -c fullInstallExistingDB-Master --region ",
+                                                            {
+                                                                "Ref": "AWS::Region"
+                                                            }
+                                                        ]
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
                                 }, "\n",
                                 "</script>"
                             ]
