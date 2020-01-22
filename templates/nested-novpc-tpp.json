@@ -6,6 +6,16 @@
             "ParameterGroups": [
                 {
                     "Label": {
+                        "default": "General Configuration"
+                    },
+                    "Parameters": [
+                        "GitHubAccount",
+                        "GitHubBranch",
+                        "GitHubRepository"
+                    ]
+                },
+                {
+                    "Label": {
                         "default": "Network Configuration"
                     },
                     "Parameters": [
@@ -15,6 +25,21 @@
                         "PublicSubnet01ID",
                         "VpcCidrBlock",
                         "VpcId"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Microsoft AD Setup"
+                    },
+                    "Parameters": [
+                        "MicrosoftADConfirmationCheck",
+                        "ADAccountUsername",
+                        "ADAccountPassword",
+                        "ADAccountPasswordConfirm",
+                        "ADSafeModePassword",
+                        "ADSafeModePasswordConfirm",
+                        "ADDomainName",
+                        "ADNetBiosName"
                     ]
                 },
                 {
@@ -52,6 +77,15 @@
                 }
             ],
             "ParameterLabels": {
+                "GitHubAccount": {
+                    "default": "GitHub Account Name: "  
+                },
+                "GitHubBranch": {
+                    "default": "GitHub Branch Name: "
+                },
+                "GitHubRepository": {
+                    "default": "GitHub Repository Name: "
+                },
                 "KeyName": {
                     "default": "Key pair to access EC2 instance: "
                 },
@@ -70,6 +104,30 @@
                 "VpcId": {
                     "default": "ID of VPC"
                 },
+                "MicrosoftADConfirmationCheck": {
+                    "default": "Install Microsoft AD confirmation: "
+                },
+                "ADAccountUsername": {
+                    "default": "Microsoft AD User: "
+                },
+                "ADAccountPassword": {
+                    "default": "Microsoft AD Password: "
+                },
+                "ADAccountPasswordConfirm": {
+                    "default": "Microsoft AD Password: (Confirm) "
+                },
+                "ADSafeModePassword": {
+                    "default": "Microsoft AD safe mode recovery password: "
+                },
+                "ADSafeModePasswordConfirm": {
+                    "default": "Microsoft AD safe mode recovery password (Confirm): "
+                },
+                "ADDomainName": {
+                    "default": "Microsoft AD domain name: "
+                },
+                "ADNetBiosName": {
+                    "default": "Microsoft AD netbios name: "
+                },
                 "DBAllocatedStorage": {
                     "default": "Size of Microsoft SQL server: "
                 },
@@ -77,22 +135,22 @@
                     "default": "Microsoft SQL server class type: "
                 },
                 "DBMasterUsername": {
-                    "default": "DBMasterUsername: "
+                    "default": "DB Master Username: "
                 },
                 "DBMasterUserPassword": {
-                    "default": "DBMasterPassword "
+                    "default": "DB Master User Password "
                 },
                 "DBMasterUserPasswordConfirm": {
-                    "default": "DBMasterPassword (Confirm): "
+                    "default": "DB Master User Password (Confirm): "
                 },
                 "DBServiceUsername": {
-                    "default": "DBServiceUsername: "
+                    "default": "DB Service Username: "
                 },
                 "DBServiceUserPassword": {
-                    "default": "DBServiceUserPassword: "
+                    "default": "DB Service User Password: "
                 },
                 "DBServiceUserPasswordConfirm": {
-                    "default": "DBServiceUserPassword (Confirm): "
+                    "default": "DB Service User Password (Confirm): "
                 },
                 "DBSnapshotID": {
                     "default": "Snapshot ID: "
@@ -116,7 +174,7 @@
                     "default": "Instance Type of TPP server: "
                 },
                 "TPPVolSize": {
-                    "default": "Volume size of TPP server instance: "
+                    "default": "Volume size of TPP server: "
                 },
                 "VenafiUserLogin": {
                     "default": "Venafi account username: "
@@ -131,6 +189,21 @@
         }
     },
     "Parameters": {
+        "GitHubAccount": {
+            "Description": "GitHub account name housing TPPAutomation repository",
+            "Type": "String",
+            "Default": "cdmadrigal"
+        },
+        "GitHubBranch": {
+            "Description": "GitHub repository branch name. Examples: 'v0.1', 'dev",
+            "Type": "String",
+            "Default": "master"
+        },
+        "GitHubRepository": {
+            "Description": "Repository name where your project is stored. Example: 'TPPRepository'",
+            "Type": "String",
+            "Default": "TPPAutomation"
+        },
         "KeyName": {
             "Type": "AWS::EC2::KeyPair::KeyName",
             "Description": "The EC2 Key Pair to allow SSH access to the instances."
@@ -158,6 +231,62 @@
             "Description": "ID of your existing VPC.",
             "Type": "AWS::EC2::VPC::Id"
         },
+        "ADAccountUsername": {
+            "Description": "Username of Microsoft Active Directory user.",
+            "Type": "String",
+            "Default": "aduser"
+        },
+        "ADAccountPassword": {
+            "AllowedPattern": "^$|^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,}$",
+            "Description": "Password of Microsoft Active Directory user. Example: Passw0rd1#@3451",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true",
+            "Default": ""
+        },
+        "ADAccountPasswordConfirm": {
+            "AllowedPattern": "^$|^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,}$",
+            "Description": "Password of Microsoft Active Directory user (Confirmation). Example: Passw0rd1#@3451",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true",
+            "Default": ""
+        },
+        "ADSafeModePassword": {
+            "AllowedPattern": "^$|^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,}$",
+            "Description": "Password of Microsoft Active Directory safe mode password. Example: Passw0rd1#@1234",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true",
+            "Default": ""
+        },
+        "ADSafeModePasswordConfirm": {
+            "AllowedPattern": "^$|^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,}$",
+            "Description": "Password of Microsoft Active Directory safe mode password. Example: Passw0rd1#@1234",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true",
+            "Default": ""
+        },
+        "ADDomainName": {
+            "Description": "Microsoft Active Directory domain name. Example: contoso.com",
+            "Type": "String",
+            "Default": "contoso.com"
+        },
+        "ADNetBiosName": {
+            "Description": "Microsoft Active Directory netbios name. Example: CONTOSO",
+            "Type": "String",
+            "Default": "CONTOSO"
+        },
+        "MicrosoftADConfirmationCheck": {
+            "Description": "Yes or No value. If you wish to setup Microsoft AD within your TPP install, set this to yes. If you don't, which means you only want to use local users, set this as No.",
+            "Type": "String",
+            "Default": "Yes",
+            "AllowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
         "DBAllocatedStorage": {
             "Description": "Allocated Storage for Microsoft SQL server. (GB)",
             "ConstraintDescription": "Allocated Storage must be numeric and between 20 and 16384.",
@@ -182,12 +311,14 @@
             ]
         },
         "DBMasterUsername": {
+            "AllowedPattern": "^[a-z0-9]+$",
             "Description": "Username for master account on Microsoft SQL server.",
-            "Type": "String"
+            "Type": "String",
+            "MaxLength": 16
         },
         "DBMasterUserPassword": {
             "Description": "Password for master account on Microsoft SQL server.",
-            "ConstraintDescription": "Must be between 8 to 41 alphanumeric charecters.",
+            "ConstraintDescription": "Must be between 8 to 41 alphanumeric characters.",
             "Type": "String",
             "MaxLength": 41,
             "MinLength": 8,
@@ -195,15 +326,17 @@
         },
         "DBMasterUserPasswordConfirm": {
             "Description": "Confirmation of Password of master account on Microsoft SQL server.",
-            "ConstraintDescription": "Must be between 8 to 41 alphanumeric charecters.",
+            "ConstraintDescription": "Must be between 8 to 41 alphanumeric characters.",
             "Type": "String",
             "MaxLength": 41,
             "MinLength": 8,
             "NoEcho": "true"
         },
         "DBServiceUsername": {
+            "AllowedPattern": "^[a-z0-9]+$",
             "Description": "Username for service user on Microsoft SQL server.",
-            "Type": "String"
+            "Type": "String",
+            "MaxLength": 16
         },
         "DBServiceUserPassword": {
             "Description": "Password for service user on Microsoft SQL server.",
@@ -231,6 +364,7 @@
             "Type": "String"
         },
         "TPPAdminAccountPassword": {
+            "AllowedPattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{12,}$",
             "Description": "Password for TPP administrator account. Must contain a lowercase, uppercase, digit and be longer than 12 characters.",
             "ConstraintDescription": "Password must contain a lowercase, uppercase, digit and be longer than 12 characters.",
             "Type": "String",
@@ -238,6 +372,7 @@
             "NoEcho": "true"
         },
         "TPPAdminAccountPasswordConfirm": {
+            "AllowedPattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{12,}$",
             "Description": "Password for TPP administrator account (Confirm). Must contain a lowercase, uppercase, digit and be longer than 12 characters.",
             "ConstraintDescription": "Password must contain a lowercase, uppercase, digit and be longer than 12 characters.",
             "Type": "String",
@@ -337,6 +472,40 @@
                         ]
                     },
                     "AssertDescription": "All subnets must be in the VPC"
+                }
+            ]
+        },
+        "matchPasswordsADAccount": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "ADAccountPassword"
+                            },
+                            {
+                                "Ref": "ADAccountPasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Active Directory service account password does not match."
+                }
+            ]
+        },
+        "matchPasswordsADSafeMode": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "ADSafeModePassword"
+                            },
+                            {
+                                "Ref": "ADSafeModePasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Active Directory safe mode password does not match."
                 }
             ]
         },
@@ -467,6 +636,15 @@
             "Properties": {
                 "TemplateURL": "https://venafi-tpp-automation.s3.amazonaws.com/templates/tpp-ec2-install.json",
                 "Parameters": {
+                    "GitHubAccount": {
+                        "Ref": "GitHubAccount"
+                    },
+                    "GitHubBranch": {
+                        "Ref": "GitHubBranch"
+                    },
+                    "GitHubRepository": {
+                        "Ref": "GitHubRepository"
+                    },
                     "KeyName": {
                         "Ref": "KeyName"
                     },
@@ -481,6 +659,30 @@
                     },
                     "VpcId": {
                         "Ref": "VpcId"
+                    },
+                    "MicrosoftADConfirmationCheck": {
+                        "Ref": "MicrosoftADConfirmationCheck"
+                    },
+                    "ADAccountUsername": {
+                        "Ref": "ADAccountUsername"
+                    },
+                    "ADAccountPassword": {
+                        "Ref": "ADAccountPassword"
+                    },
+                    "ADAccountPasswordConfirm": {
+                        "Ref": "ADAccountPasswordConfirm"
+                    },
+                    "ADSafeModePassword": {
+                        "Ref": "ADSafeModePassword"
+                    },
+                    "ADSafeModePasswordConfirm": {
+                        "Ref": "ADSafeModePasswordConfirm"
+                    },
+                    "ADDomainName": {
+                        "Ref": "ADDomainName"
+                    },
+                    "ADNetBiosName": {
+                        "Ref": "ADNetBiosName"
                     },
                     "DBMasterUsername": {
                         "Ref": "DBMasterUsername"

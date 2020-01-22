@@ -1,0 +1,1121 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "This template simplifies the deployment of a TPP server on to an AWS EC2 instance. A Microsoft sql server is deployed as the backend instance for the tpp server. For any questions, contact: Cris Madrigal <cris.madrigal@venafi.com>",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "General Configuration"
+                    },
+                    "Parameters": [
+                        "GitHubAccount",
+                        "GitHubBranch",
+                        "GitHubRepository"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Network Configuration"
+                    },
+                    "Parameters": [
+                        "KeyName",
+                        "PrivateSubnet01ID",
+                        "PublicSubnet01ID",
+                        "VpcCidrBlock",
+                        "VpcId"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Microsoft AD setup"
+                    },
+                    "Parameters": [
+                        "MicrosoftADConfirmationCheck",
+                        "ADAccountUsername",
+                        "ADAccountPassword",
+                        "ADAccountPasswordConfirm",
+                        "ADSafeModePassword",
+                        "ADSafeModePasswordConfirm",
+                        "ADDomainName",
+                        "ADNetBiosName"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "TPP Database Setup"
+                    },
+                    "Parameters": [
+                        "DBMasterUsername",
+                        "DBMasterUserPassword",
+                        "DBMasterUserPasswordConfirm",
+                        "DBServiceUsername",
+                        "DBServiceUserPassword",
+                        "DBServiceUserPasswordConfirm",
+                        "DBSnapshot",
+                        "DBUrlEndpoint",
+                        "DBPort"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "TPP Server Setup"
+                    },
+                    "Parameters": [
+                        "TPPAdminAccount",
+                        "TPPAdminAccountPassword",
+                        "TPPAdminAccountPasswordConfirm",
+                        "TPPAMIId",
+                        "TPPAnswerFile",
+                        "TPPInstanceType",
+                        "TPPVolSize",
+                        "VenafiUserLogin",
+                        "VenafiUserPass",
+                        "VenafiUserPassConfirm"
+                    ]
+                }
+            ],
+            "ParameterLabels": {
+                "GitHubAccount": {
+                    "default": "GitHub Account Name: "  
+                },
+                "GitHubBranch": {
+                    "default": "GitHub Branch Name: "
+                },
+                "GitHubRepository": {
+                    "default": "GitHub Repository Name: "
+                },
+                "KeyName": {
+                    "default": "Key pair to access EC2 instance: "
+                },
+                "PrivateSubnet01ID": {
+                    "default": "Private CIDR Block 1 ID: "
+                },
+                "PublicSubnet01ID": {
+                    "default": "Public CIDR Block 1 ID: "
+                },
+                "VpcCidrBlock": {
+                    "default": "CIDR block of your VPC: "
+                },
+                "VpcId": {
+                    "default": "ID of VPC: "
+                },
+                "MicrosoftADConfirmationCheck": {
+                    "default": "Install Microsoft AD confirmation: "
+                },
+                "ADAccountUsername": {
+                    "default": "Microsoft AD User: "
+                },
+                "ADAccountPassword": {
+                    "default": "Microsoft AD Password: "
+                },
+                "ADAccountPasswordConfirm": {
+                    "default": "Microsoft AD Password: (Confirm) "
+                },
+                "ADSafeModePassword": {
+                    "default": "Microsoft AD safe mode recovery password: "
+                },
+                "ADSafeModePasswordConfirm": {
+                    "default": "Microsoft AD safe mode recovery password (Confirm): "
+                },
+                "ADDomainName": {
+                    "default": "Microsoft AD domain name: "
+                },
+                "ADNetBiosName": {
+                    "default": "Microsoft AD netbios name: "
+                },
+                "DBMasterUsername": {
+                    "default": "DB Master Username: "
+                },
+                "DBMasterUserPassword": {
+                    "default": "DB Master User Password: "
+                },
+                "DBMasterUserPasswordConfirm": {
+                    "default": "DB Master User Password (Confirm): "
+                },
+                "DBServiceUsername": {
+                    "default": "DB Service Username: "
+                },
+                "DBServiceUserPassword": {
+                    "default": "DB Service User Password: "
+                },
+                "DBServiceUserPasswordConfirm": {
+                    "default": "DB Service User Password (Confirm): "
+                },
+                "DBSnapshot": {
+                    "default": "Database Snapshot used?"
+                },
+                "DBUrlEndpoint": {
+                    "default": "URL for Microsoft SQL server: "
+                },
+                "DBPort": {
+                    "default": "Port for Microsoft SQL server: "
+                },
+                "TPPAdminAccount": {
+                    "default": "TPP Admin Username: "
+                },
+                "TPPAdminAccountPassword": {
+                    "default": "TPP Admin Password: "
+                },
+                "TPPAdminAccountPasswordConfirm": {
+                    "default": "TPP Admin Password (Confirm): "
+                },
+                "TPPAMIId": {
+                    "default": "Microsoft Server ID: "
+                },
+                "TPPAnswerFile": {
+                    "default": "TPPAnswerfile: "
+                },
+                "TPPInstanceType": {
+                    "default": "Instance Type for TPP server: "
+                },
+                "TPPVolSize": {
+                    "default": "Volume size of TPP server instance: "
+                },
+                "VenafiUserLogin": {
+                    "default": "Venafi Account Username: "
+                },
+                "VenafiUserPass": {
+                    "default": "Venafi Account Password: "
+                },
+                "VenafiUserPassConfirm": {
+                    "default": "Venafi Account Password (confirm): "
+                }
+            }
+        }
+    },
+    "Parameters": {
+        "GitHubAccount": {
+            "Description": "GitHub account name housing TPPAutomation repository",
+            "Type": "String",
+            "Default": "cdmadrigal"
+        },
+        "GitHubBranch": {
+            "Description": "GitHub repository branch name. Examples: 'v0.1', 'dev",
+            "Type": "String",
+            "Default": "master"
+        },
+        "GitHubRepository": {
+            "Description": "Repository name where your project is stored. Example: 'TPPRepository'",
+            "Type": "String",
+            "Default": "TPPAutomation"
+        },
+        "KeyName": {
+            "Type": "AWS::EC2::KeyPair::KeyName",
+            "Description": "The EC2 Key Pair to allow SSH access to the instances."
+        },
+        "PrivateSubnet01ID": {
+            "Description": "ID of private subnet 1.",
+            "Type": "AWS::EC2::Subnet::Id"
+        },
+        "PublicSubnet01ID": {
+            "Description": "ID of public subnet 1.",
+            "Type": "AWS::EC2::Subnet::Id"
+        },
+        "VpcCidrBlock": {
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "Description": "CIDR Block of your VPC.",
+            "Type": "String",
+            "MaxLength":"18",
+            "MinLength": "9"
+        },
+        "VpcId": {
+            "Description": "ID of your existing VPC.",
+            "Type": "AWS::EC2::VPC::Id"
+        },
+        "ADAccountUsername": {
+            "Description": "Username of Microsoft Active Directory user.",
+            "Type": "String",
+            "Default": ""
+        },
+        "ADAccountPassword": {
+            "AllowedPattern": "^$|^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{12,}$",
+            "Description": "Password of Microsoft Active Directory user. Example: Passw0rd1@3451",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true",
+            "Default": ""
+        },
+        "ADAccountPasswordConfirm": {
+            "AllowedPattern": "^$|^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{12,}$",
+            "Description": "Password of Microsoft Active Directory user (Confirmation). Example: Passw0rd1@3451",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true",
+            "Default": ""
+        },
+        "ADSafeModePassword": {
+            "AllowedPattern": "^$|^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{12,}$",
+            "Description": "Password of Microsoft Active Directory safe mode password. Example: Passw0rd1@1234",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true",
+            "Default": ""
+        },
+        "ADSafeModePasswordConfirm": {
+            "AllowedPattern": "^$|^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{12,}$",
+            "Description": "Password of Microsoft Active Directory safe mode password (Confirmation). Example: Passw0rd1@1234",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit, special character, and be longer than 12 characters.",
+            "Type": "String",
+            "NoEcho": "true",
+            "Default": ""
+        },
+        "ADDomainName": {
+            "Description": "Microsoft Active Directory domain name. Example: contoso.com",
+            "Type": "String",
+            "Default": "contoso.local"
+        },
+        "ADNetBiosName": {
+            "Description": "Microsoft Active Directory netbios name. Example: CONTOSO",
+            "Type": "String",
+            "Default": "CONTOSO"
+        },
+        "MicrosoftADConfirmationCheck": {
+            "Description": "Yes or No value. If you wish to setup Microsoft AD within your TPP install, set this to yes. If you don't, which means you only want to use local users, set this as No.",
+            "Type": "String",
+            "Default": "Yes",
+            "AllowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "DBMasterUsername": {
+            "AllowedPattern": "^[a-z0-9]+$",
+            "Description": "Username for master account on Microsoft SQL server.",
+            "Type": "String",
+            "MaxLength": 16
+        },
+        "DBMasterUserPassword": {
+            "Description": "Password for master account on Microsoft SQL server.",
+            "ConstraintDescription": "Must be between 8 to 128 alphanumeric characters.",
+            "Type": "String",
+            "MaxLength": 128,
+            "MinLength": 8,
+            "NoEcho": "true"
+        },
+        "DBMasterUserPasswordConfirm": {
+            "Description": "Confirmation of Password of master account on Microsoft SQL server.",
+            "ConstraintDescription": "Must be between 8 to 128 alphanumeric characters.",
+            "Type": "String",
+            "MaxLength": 128,
+            "MinLength": 8,
+            "NoEcho": "true"
+        },
+        "DBServiceUsername": {
+            "AllowedPattern": "^[a-z0-9]+$",
+            "Description": "Username for service user on Microsoft SQL server.",
+            "Type": "String",
+            "MaxLength": 16
+        },
+        "DBServiceUserPassword": {
+            "Description": "Password for service user on Microsoft SQL server.",
+            "ConstraintDescription": "Must be between 8 to 128 alphanumeric characters.",
+            "Type": "String",
+            "MaxLength": 128,
+            "MinLength": 8,
+            "NoEcho": "true"
+        },
+        "DBServiceUserPasswordConfirm": {
+            "Description": "Confirmation of Password of service user on Microsoft SQL server.",
+            "ConstraintDescription": "Must be between 8 to 128 alphanumeric characters.",
+            "Type": "String",
+            "MaxLength": 128,
+            "MinLength": 8,
+            "NoEcho": "true"
+        },
+        "DBSnapshot": {
+            "Description": "Yes or No value. If the DB is preconfigured (already has ran the necessary scripts or was restored from a snapshot) select Yes, if not, select No.",
+            "Type": "String",
+            "AllowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "DBUrlEndpoint": {
+            "Description": "URL of your RDS Microsoft SQL server.",
+            "Type": "String",
+            "Default": ""
+        },
+        "DBPort": {
+            "Description": "Port of your RDS Microsoft SQL server.",
+            "Type": "Number",
+            "Default": 1433
+        },
+        "TPPAdminAccount": {
+            "Description": "Username for TPP administrator account.",
+            "Type": "String"
+        },
+        "TPPAdminAccountPassword": {
+            "AllowedPattern": "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{12,}$",
+            "Description": "Password for TPP administrator account. Must contain a lowercase, uppercase, digit and be longer than 12 characters.",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit and be longer than 12 characters.",
+            "Type": "String",
+            "MinLength": 12,
+            "NoEcho": "true"
+        },
+        "TPPAdminAccountPasswordConfirm": {
+            "AllowedPattern": "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{12,}$",
+            "Description": "Password for TPP administrator account (Confirm). Must contain a lowercase, uppercase, digit and be longer than 12 characters.",
+            "ConstraintDescription": "Password must contain a lowercase, uppercase, digit and be longer than 12 characters.",
+            "Type": "String",
+            "MinLength": 12,
+            "NoEcho": "true"
+        },
+        "TPPAMIId": {
+            "Description": "Latest Microsoft Server 2016 AMI Id.",
+            "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+            "Default": "/aws/service/ami-windows-latest/Windows_Server-2016-English-Full-Base"
+        },
+        "TPPAnswerFile": {
+            "Description": "Pre-configured XML file with TPP server parameters. Should be an acessible URL that can be curled.",
+            "Type": "String"
+        },
+        "TPPInstanceType": {
+            "Description": "Instance type for TPP server.",
+            "ConstraintDescription": "TPPInstanceType must be a valid EC2 instance type.",
+            "Type": "String",
+            "Default": "t2.large",
+            "AllowedValues": [
+                "t2.large",
+                "t2.xlarge",
+                "t2.2xlarge",
+                "t3a.large",
+                "t3a.xlarge",
+                "t3a.2xlarge",
+                "t3.large",
+                "t3.xlarge",
+                "t3.2xlarge",
+                "m5ad.large",
+                "m5ad.xlarge",
+                "m5ad.2xlarge",
+                "m5ad.4xlarge",
+                "m5a.large",
+                "m5a.xlarge",
+                "m5a.2xlarge",
+                "m5a.4xlarge",
+                "m5a.8xlarge",
+                "m5d.large",
+                "m5d.xlarge",
+                "m5d.2xlarge",
+                "m5d.4xlarge",
+                "m5d.8xlarge",
+                "c5n.large",
+                "c5n.xlarge",
+                "c5n.2xlarge",
+                "c5n.4xlarge",
+                "r5ad.large",
+                "r5ad.xlarge",
+                "r5ad.2xlarge",
+                "r5ad.4xlarge",
+                "r5a.large",
+                "r5a.xlarge",
+                "r5a.2xlarge",
+                "r5a.4xlarge"
+            ]
+        },
+        "TPPVolSize": {
+            "Description": "Volume Size of Windows Server 2016 instance. (TPP Server)",
+            "ConstraintDescription": "Volume size must be numeric and between 30 and 16384",
+            "Type": "Number",
+            "Default": 40,
+            "MaxValue": 16384,
+            "MinValue": 30
+        },
+        "VenafiUserLogin": {
+            "Description": "Venafi account username. Used to download the TPP zip file from the downloads site.",
+            "Type": "String"
+        },
+        "VenafiUserPass": {
+            "Description": "Venafi account password. Used to download the TPP zip file from the downloads site.",
+            "Type": "String",
+            "NoEcho": "true"
+        },
+        "VenafiUserPassConfirm": {
+            "Description": "Venafi account password. Used to download the TPP zip file from the downloads site.",
+            "Type": "String",
+            "NoEcho": "true"
+        }
+    },
+    "Rules": {
+        "SubnetsInVPC": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::EachMemberIn": [
+                            {
+                                "Fn::ValueOfAll": [
+                                    "AWS::EC2::Subnet::Id",
+                                    "VpcId"
+                                ]
+                            },
+                            {
+                                "Fn::RefAll": "AWS::EC2::VPC::Id"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "All subnets must be in the VPC"
+                }
+            ]
+        },
+        "matchPasswordsADAccount": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "ADAccountPassword"
+                            },
+                            {
+                                "Ref": "ADAccountPasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Active Directory service account password does not match."
+                }
+            ]
+        },
+        "matchPasswordsADSafeMode": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "ADSafeModePassword"
+                            },
+                            {
+                                "Ref": "ADSafeModePasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Active Directory safe mode password does not match."
+                }
+            ]
+        },
+        "matchPasswordsDBMaster": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "DBMasterUserPassword"
+                            },
+                            {
+                                "Ref": "DBMasterUserPasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Database master user password does not match."
+                }
+            ]
+        },
+        "matchPasswordsDBService": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "DBServiceUserPassword"
+                            },
+                            {
+                                "Ref": "DBServiceUserPasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Database service user password does not match."
+                }
+            ]
+        },
+        "matchPasswordsTPPAdmin": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "TPPAdminAccountPassword"
+                            },
+                            {
+                                "Ref": "TPPAdminAccountPasswordConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "TPP Admin account password does not match."
+                }
+            ]
+        },
+        "matchVenafiUserPassword": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Equals": [
+                            {
+                                "Ref": "VenafiUserPass"
+                            },
+                            {
+                                "Ref": "VenafiUserPassConfirm"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "Venafi account password does not match."
+                }
+            ]
+        }
+    },
+    "Conditions": {
+        "DBSnapshotCheck": {
+            "Fn::Equals": [
+                {
+                    "Ref": "DBSnapshot"
+                },
+                "No"
+            ]
+        },
+        "MicrosoftADCheck": {
+            "Fn::Equals": [
+                {
+                    "Ref": "MicrosoftADConfirmationCheck"
+                },
+                "Yes"
+            ]
+        }
+    },
+    "Resources": {
+        "TPPSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VpcId"
+                },
+                "GroupDescription": "Security group used to secure TPP server.",
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 1433,
+                        "ToPort": 1433,
+                        "CidrIp": {
+                            "Ref": "VpcCidrBlock"
+                        }
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 443,
+                        "ToPort": 443,
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 53,
+                        "ToPort": 53,
+                        "CidrIp": {
+                            "Ref": "VpcCidrBlock"
+                        }
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 25,
+                        "ToPort": 25,
+                        "CidrIp": {
+                            "Ref": "VpcCidrBlock"
+                        }
+                    },
+                    {
+                        "IpProtocol": "udp",
+                        "FromPort": 514,
+                        "ToPort": 514,
+                        "CidrIp": {
+                            "Ref": "VpcCidrBlock"
+                        }
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Sub": "${AWS::StackName} - TPP Security Group"
+                        }
+                    }
+                ]
+            }
+        },
+        "TPPServer": {
+            "Type": "AWS::EC2::Instance",
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "configSets": {
+                        "fullInstallNewDB-AD-Master": [
+                            "dependencySetup",
+                            "adInstallSetup",
+                            "mssqlDBSetup",
+                            "installTPPclean",
+                            "signalComplete"
+                        ],
+                        "fullInstallNewDB-Master": [
+                            "dependencySetup",
+                            "mssqlDBSetup",
+                            "installTPPclean",
+                            "signalComplete"
+                        ],
+                        "fullInstallExistingDB-Master": [
+                            "dependencySetup",
+                            "installTPP-NoDBSetup",
+                            "signalComplete"
+                        ],
+                        "fullInstallExistingDB-AD-Master": [
+                            "dependencySetup",
+                            "adInstallSetup",
+                            "installTPP-NoDBSetup",
+                            "signalComplete"
+                        ]
+                    },
+                    "adInstallSetup": {
+                        "commands": {
+                            "01_ad-cs-download": {
+                                "command": {
+                                    "Fn::Sub": "powershell -Command \"& { iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/add-ADDSPrereqs.ps1' -OutFile add-ADDSPrereqs.ps1 }\" ; \"&{ iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/add-ADFeatures.ps1' -OutFile add-ADFeatures.ps1 }\" ; \"&{ iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/CreateLocalADUser.ps1' -OutFile CreateLocalADUser.ps1 }\" ; \"& { iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/install_adcs.ps1' -OutFile install_adcs.ps1 }\" ; \"& { iwr 'https://raw.githubusercontent.com/${GitHubAccount}/${GitHubRepository}/${GitHubBranch}/powershell-scripts/InstallNewForest.ps1' -OutFile InstallNewForest.ps1 }\""
+                                },
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "02_ad-cs-file-changes": {
+                                "command": {
+                                    "Fn::Sub": "powershell -Command \"(get-content 'CreateLocalADUser.ps1') | ForEach-Object {$_ -replace \\\"ADUSERPASSWORD\\\",\\\"${ADAccountPassword}\\\"} | ForEach-Object {$_ -replace \\\"ADUSER\\\",\\\"${ADAccountUsername}\\\"} | set-content 'CreateLocalADUser.ps1'\""
+                                },
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "03_ad-cs-createlocaluser": {
+                                "command": "powershell -File CreateLocalADUser.ps1",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "04_ad-cs-forest-changes": {
+                                "command": {
+                                    "Fn::Sub": "powershell -Command \"(get-content 'InstallNewForest.ps1') | ForEach-Object {$_ -replace \\\"ADSAFEMODEPASSWORD\\\",\\\"${ADSafeModePassword}\\\"} | ForEach-Object {$_ -replace \\\"ADDOMAINNAME\\\",\\\"${ADDomainName}\\\"} | ForEach-Object {$_ -replace \\\"ADNETBIOSNAME\\\",\\\"${ADNetBiosName}\\\"} | set-content 'InstallNewForest.ps1'\""
+                                },
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "05_ad-cs-add-addsprereqs": {
+                                "command": "powershell -File add-ADDSPrereqs.ps1",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "forever"
+                            },
+                            "06_ad-cs-add-adfeatures": {
+                                "command": "powershell -File add-ADFeatures.ps1",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "07_ad-cs-installnewforest": {
+                                "command": "powershell -File InstallNewForest.ps1",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "forever"
+                            },
+                            "08_ad-cs-add-cert-authority": {
+                                "command": "powershell -Command Add-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools",
+                                "waitAfterCompletion": "0"
+                            },
+                            "09_ad-cs-addgroup": {
+                                "command": {
+                                    "Fn::Sub": "powershell -Command Add-ADGroupMember -identity 'Domain Admins' -members \"${ADAccountUsername}\"; Add-ADGroupMember -identity 'Enterprise Admins' -members \"${ADAccountUsername}\""
+                                },
+                                "waitAfterCompletion": "0"
+                            },
+                            "10_install-adcs": {
+                                "command": "powershell -File install_adcs.ps1",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            }
+                        }
+                    },
+                    "dependencySetup": {
+                        "commands": {
+                            "01_vc-dist-dl": {
+                                "command": "powershell -command \"& { iwr 'https://aka.ms/vs/16/release/vc_redist.x64.exe' -OutFile vc_redist.x64.exe }\"",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "02_vc-dist-install": {
+                                "command": "vc_redist.x64.exe /install /passive /norestart",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "03_net-framework-dl": {
+                                "command": "powershell -command \"& { iwr http://go.microsoft.com/fwlink/?LinkId=863262 -Outfile NDP472-KB4054531-Web.exe }\"",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "04_md-sources": {
+                                "command": "md C:\\source\\sxs",
+                                "waitAfterCompletion": "0"
+                            },
+                            "05_install-net-framework-core": {
+                                "command": "powershell -command Install-WindowsFeature -Name Net-Framework-Core -Source C:\\source\\sxs",
+                                "waitAfterCompletion": "0"
+                            },
+                            "06_odbc-cli-dl": {
+                                "command": "powershell -command \"& { iwr 'https://download.microsoft.com/download/E/6/B/E6BFDC7A-5BCD-4C51-9912-635646DA801E/en-US/msodbcsql_17.4.2.1_x64.msi' -OutFile msodbcsql_17.4.2.1_x64.msi }\"",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "07_odbc-cli-install": {
+                                "command": "msiexec /quiet /passive /qn /i msodbcsql_17.4.2.1_x64.msi IACCEPTMSODBCSQLLICENSETERMS=YES ADDLOCAL=ALL",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "08_cmd-utils-dl": {
+                                "command": "powershell -command \"& { iwr https://go.microsoft.com/fwlink/?linkid=2082790 -OutFile MsSqlCmdLnUtils.msi }\"",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "09_cmd-utils-install": {
+                                "command": "msiexec /quiet /passive /qn /i MsSqlCmdLnUtils.msi IACCEPTMSSQLCMDLNUTILSLICENSETERMS=YES",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "10_update-path": {
+                                "command": "set PATH=%PATH%;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;",
+                                "waitAfterCompletion": "0"
+                            },
+                            "11_answerfile-dl": {
+                                "command": {
+                                    "Fn::Sub": "powershell -command \"& { iwr ${TPPAnswerFile} -Outfile answerfile.xml }\""
+                                },
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "12_rewrite-dl": {
+                                "command": "powershell -command \"& { iwr https://download.microsoft.com/download/C/9/E/C9E8180D-4E51-40A6-A9BF-776990D8BCA9/rewrite_amd64.msi -Outfile rewrite_amd64.msi }\"",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "13_install-net-framework-4.7.2": {
+                                "command": "NDP472-KB4054531-Web.exe /install /q ",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "forever"
+                            },
+                            "14_install-IIS": {
+                                "command": "powershell -Command Install-WindowsFeature -name Web-Server -IncludeManagementTools",
+                                "waitAfterCompletion": "0"
+                            },
+                            "15_install-IIS-rewrite": {
+                                "command": "msiexec /i rewrite_amd64.msi /q",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "16_install-IIS-extension": {
+                                "command": "powershell -Command Enable-WindowsOptionalFeature -Online -FeatureName IIS-ApplicationDevelopment; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ApplicationInit; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ISAPIExtensions; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ASP; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ISAPIFilter; Enable-WindowsOptionalFeature -Online -FeatureName IIS-WebSockets; Enable-WindowsOptionalFeature -Online -FeatureName IIS-ServerSideIncludes",
+                                "waitAfterCompletion": "0"
+                            },
+                            "17_enable-IIS-extension": {
+                                "command": "dism /online /enable-feature /all /featurename:IIS-ASPNET45",
+                                "waitAfterCompletion": "0"
+                            }
+                        }
+                    },
+                    "mssqlDBSetup": {
+                        "commands": {
+                            "01_db_create": {
+                                "command": {
+                                    "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -Q \"CREATE DATABASE tppdb\""
+                                },
+                                "waitAfterCompletion": "0"
+                            },
+                            "02_user-create": {
+                                "command": {
+                                    "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -Q \"CREATE LOGIN ${DBServiceUsername} WITH PASSWORD = '${DBServiceUserPassword}'; USE tppdb; CREATE USER ${DBServiceUsername} FOR LOGIN ${DBServiceUsername}\""
+                                },
+                                "waitAfterCompletion": "0"
+                            },
+                            "03_download-tpp": {
+                                "command": {
+                                    "Fn::Sub": "powershell -Command [system.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://download.venafi.com/Trust Protection Platform/Current/19.4.0/Venafi Trust Protection Platform 19.4.0.zip' -Headers @{ Authorization = \\\"Basic $([System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes(\\\"${VenafiUserLogin}:${VenafiUserPass}\\\")))\\\" } -OutFile 'Venafi Trust Protection Platform 19.4.0.zip'"
+                                },
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "04_unzip-tpp": {
+                                "command": "powershell -Command Expand-Archive -LiteralPath 'C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0.zip'",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "05_create-tppdb": {
+                                "command": {
+                                    "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -i \"C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\CreateDB.sql\" -d tppdb"
+                                },
+                                "waitAfterCompletion": "0"
+                            },
+                            "06_modify-grants-script": {
+                                "command": {
+                                    "Fn::Sub": "powershell -Command \"(get-content 'C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\Grants\\sample-grants.sql') | ForEach-Object {$_ -replace \\\"DIRECTOR_RW\\\",\\\"${DBServiceUsername}\\\"} | set-content 'C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\Grants\\sample-grants.sql'\""
+                                },
+                                "waitAfterCompletion": "0"
+                            },
+                            "07_run-grants-script": {
+                                "command": {
+                                    "Fn::Sub": "sqlcmd -S tcp:${DBUrlEndpoint},${DBPort} -U ${DBMasterUsername} -P ${DBMasterUserPassword} -i \"C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0\\Database Scripts\\MSSQL\\Grants\\sample-grants.sql\" -d tppdb"
+                                },
+                                "waitAfterCompletion": "0"
+                            }
+                        }
+                    },
+                    "installTPPclean": {
+                        "commands": {
+                            "01_install-msi": {
+                                "command": "msiexec /i VenafiTPPInstallx64.msi /q /n",
+                                "cwd": "C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0",
+                                "waitAfterCompletion": "0"
+                            },
+                            "02_replace-answerfile": {
+                                "command": {
+                                    "Fn::Sub": "powershell -Command \"(get-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml') | ForEach-Object {$_ -replace \\\"DB_URL\\\",\\\"${DBUrlEndpoint}\\\"} | ForEach-Object {$_ -replace \\\"DB_PORT\\\",\\\"${DBPort}\\\"} | ForEach-Object {$_ -replace \\\"DB_USER\\\",\\\"${DBServiceUsername}\\\"} | ForEach-Object {$_ -replace \\\"DB_PASS\\\",\\\"${DBServiceUserPassword}\\\"} | ForEach-Object {$_ -replace \\\"TPP_ADMIN\\\",\\\"${TPPAdminAccount}\\\"} | ForEach-Object {$_ -replace \\\"TPP_PASS\\\",\\\"${TPPAdminAccountPassword}\\\"} | set-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml'\""
+                                },
+                                "waitAfterCompletion": "0"
+                            },
+                            "03_install-tpp": {
+                                "command": "TppConfiguration.exe -install:C:\\Users\\Administrator\\Downloads\\answerfile.xml",
+                                "cwd": "C:\\Program Files\\Venafi\\Platform",
+                                "waitAfterCompletion": "0"
+                            },
+                            "04_remove-default-IIS-server": {
+                                "command": "powershell -Command Remove-IISSite -Name 'Default Web Site' -confirm:$false",
+                                "waitAfterCompletion": "0"
+                            }
+                        }
+                    },
+                    "installTPP-NoDBSetup": {
+                        "commands": {
+                            "01_download-tpp": {
+                                "command": {
+                                    "Fn::Sub": "powershell -Command [system.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://download.venafi.com/Trust Protection Platform/Current/19.4.0/Venafi Trust Protection Platform 19.4.0.zip' -Headers @{ Authorization = \\\"Basic $([System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes(\\\"${VenafiUserLogin}:${VenafiUserPass}\\\")))\\\" } -OutFile 'Venafi Trust Protection Platform 19.4.0.zip'"
+                                },
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "02_unzip-tpp": {
+                                "command": "powershell -Command Expand-Archive -LiteralPath 'C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0.zip'",
+                                "cwd": "C:\\Users\\Administrator\\Downloads",
+                                "waitAfterCompletion": "0"
+                            },
+                            "03_install-msi": {
+                                "command": "msiexec /i VenafiTPPInstallx64.msi /q /n",
+                                "cwd": "C:\\Users\\Administrator\\Downloads\\Venafi Trust Protection Platform 19.4.0",
+                                "waitAfterCompletion": "0"
+                            },
+                            "04_replace-answerfile": {
+                                "command": {
+                                    "Fn::Sub": "powershell -Command \"(get-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml') | ForEach-Object {$_ -replace \\\"DB_URL\\\",\\\"${DBUrlEndpoint}\\\"} | ForEach-Object {$_ -replace \\\"DB_PORT\\\",\\\"${DBPort}\\\"} | ForEach-Object {$_ -replace \\\"DB_USER\\\",\\\"${DBServiceUsername}\\\"} | ForEach-Object {$_ -replace \\\"DB_PASS\\\",\\\"${DBServiceUserPassword}\\\"} | ForEach-Object {$_ -replace \\\"TPP_ADMIN\\\",\\\"${TPPAdminAccount}\\\"} | ForEach-Object {$_ -replace \\\"TPP_PASS\\\",\\\"${TPPAdminAccountPassword}\\\"} | set-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml'\""
+                                },
+                                "waitAfterCompletion": "0"
+                            },
+                            "05_install-tpp": {
+                                "command": "TppConfiguration.exe -install:C:\\Users\\Administrator\\Downloads\\answerfile.xml -add",
+                                "cwd": "C:\\Program Files\\Venafi\\Platform",
+                                "waitAfterCompletion": "0"
+                            },
+                            "06_remove-default-IIS-server": {
+                                "command": "powershell -Command Remove-IISSite -Name 'Default Web Site' -confirm:$false",
+                                "waitAfterCompletion": "0"
+                            }
+                        }
+                    },
+                    "signalComplete": {
+                        "commands": {
+                            "01_signal-complete": {
+                                "command": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "cfn-signal.exe -e %ERRORLEVEL% --resource TPPServer --stack ", 
+                                            {
+                                                "Ref": "AWS::StackName"
+                                            },
+                                            " --region ",
+                                            {
+                                                "Ref": "AWS::Region"
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion": "0"
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties": {
+                "BlockDeviceMappings": [
+                    {
+                        "DeviceName": "/dev/sda1",
+                        "Ebs": {
+                            "VolumeSize": {
+                                "Ref": "TPPVolSize"
+                            }
+                        }
+                    }
+                ],
+                "ImageId": {
+                    "Ref": "TPPAMIId"
+                },
+                "InstanceType": {
+                    "Ref": "TPPInstanceType"
+                },
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "SecurityGroupIds": [
+                    {
+                        "Ref": "TPPSecurityGroup"
+                    }
+                ],
+                "SubnetId": {
+                    "Ref": "PublicSubnet01ID"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Sub": "${AWS::StackName} - TPP Server"
+                        }
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "<script>\n",
+                                {
+                                    "Fn::If": [
+                                        "DBSnapshotCheck",
+                                        {
+                                            "Fn::If": [
+                                                "MicrosoftADCheck",
+                                                {
+                                                    "Fn::Join": [
+                                                        "",
+                                                        [
+                                                            "cfn-init.exe -v -s ",
+                                                            {
+                                                                "Ref": "AWS::StackId"
+                                                            },
+                                                            " -r TPPServer -c fullInstallNewDB-AD-Master --region ",
+                                                            {
+                                                                "Ref": "AWS::Region"
+                                                            }, "\n"
+                                                        ]
+                                                    ]
+                                                },
+                                                {
+                                                    "Fn::Join": [
+                                                        "",
+                                                        [
+                                                            "cfn-init.exe -v -s ",
+                                                            {
+                                                                "Ref": "AWS::StackId"
+                                                            },
+                                                            " -r TPPServer -c fullInstallNewDB-Master --region ",
+                                                            {
+                                                                "Ref": "AWS::Region"
+                                                            }
+                                                        ]
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "Fn::If": [
+                                                "MicrosoftADCheck",
+                                                {
+                                                    "Fn::Join": [
+                                                        "",
+                                                        [
+                                                            "cfn-init.exe -v -s ",
+                                                            {
+                                                                "Ref": "AWS::StackId"
+                                                            },
+                                                            " -r TPPServer -c fullInstallExistingDB-AD-Master --region ",
+                                                            {
+                                                                "Ref": "AWS::Region"
+                                                            }, "\n"
+                                                        ]
+                                                    ]
+                                                },
+                                                {
+                                                    "Fn::Join": [
+                                                        "",
+                                                        [
+                                                            "cfn-init.exe -v -s ",
+                                                            {
+                                                                "Ref": "AWS::StackId"
+                                                            },
+                                                            " -r TPPServer -c fullInstallExistingDB-Master --region ",
+                                                            {
+                                                                "Ref": "AWS::Region"
+                                                            }
+                                                        ]
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }, "\n",
+                                "</script>"
+                            ]
+                        ]
+                    }
+                }
+            },
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT1H15M"
+                }
+            }
+        },
+        "TPPEIP": {
+            "Type": "AWS::EC2::EIP",
+            "Properties": {
+                "Domain": "vpc",
+                "InstanceId": {
+                    "Ref": "TPPServer"
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "TPPServerIPAddress": {
+            "Description": "TPP Webserver",
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "https://",
+                        {
+                            "Fn::GetAtt": [
+                                "TPPServer",
+                                "PublicIp"
+                            ]
+                        },
+                        "/vedadmin"
+                    ]
+                ]
+            }
+        },
+        "TPPApertureAddress": {
+            "Description": "TPP Webserver of Aperture server",
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "https://",
+                        {
+                            "Fn::GetAtt": [
+                                "TPPServer",
+                                "PublicIp"
+                            ]
+                        },
+                        "/aperture"
+                    ]
+                ]
+            }
+        }
+    }
+}

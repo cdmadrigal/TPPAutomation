@@ -107,12 +107,14 @@
             ]
         },
         "DBMasterUsername": {
+            "AllowedPattern": "^[a-z0-9]+$",
             "Description": "Username for master account on Microsoft SQL server.",
-            "Type": "String"
+            "Type": "String",
+            "MaxLength": 16
         },
         "DBMasterUserPassword": {
             "Description": "Password for master account on Microsoft SQL server.",
-            "ConstraintDescription": "Must be between 8 to 41 alphanumeric charecters.",
+            "ConstraintDescription": "Must be between 8 to 41 alphanumeric characters.",
             "Type": "String",
             "MaxLength": 41,
             "MinLength": 8,
@@ -120,7 +122,7 @@
         },
         "DBMasterUserPasswordConfirm": {
             "Description": "Confirmation of Password of master account on Microsoft SQL server.",
-            "ConstraintDescription": "Must be between 8 to 41 alphanumeric charecters.",
+            "ConstraintDescription": "Must be between 8 to 41 alphanumeric characters.",
             "Type": "String",
             "MaxLength": 41,
             "MinLength": 8,
