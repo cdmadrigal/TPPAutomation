@@ -710,12 +710,14 @@
                                 "waitAfterCompletion": "forever"
                             },
                             "08_ad-cs-add-cert-authority": {
-                                "command": "powershell -Command Add-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools"
+                                "command": "powershell -Command Add-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools",
+                                "waitAfterCompletion": "0"
                             },
                             "09_ad-cs-addgroup": {
                                 "command": {
                                     "Fn::Sub": "powershell -Command Add-ADGroupMember -identity 'Domain Admins' -members \"${ADAccountUsername}\"; Add-ADGroupMember -identity 'Enterprise Admins' -members \"${ADAccountUsername}\""
-                                }
+                                },
+                                "waitAfterCompletion": "0"
                             },
                             "10_install-adcs": {
                                 "command": "powershell -File install_adcs.ps1",
@@ -865,11 +867,16 @@
                             "02_replace-answerfile": {
                                 "command": {
                                     "Fn::Sub": "powershell -Command \"(get-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml') | ForEach-Object {$_ -replace \\\"DB_URL\\\",\\\"${DBUrlEndpoint}\\\"} | ForEach-Object {$_ -replace \\\"DB_PORT\\\",\\\"${DBPort}\\\"} | ForEach-Object {$_ -replace \\\"DB_USER\\\",\\\"${DBServiceUsername}\\\"} | ForEach-Object {$_ -replace \\\"DB_PASS\\\",\\\"${DBServiceUserPassword}\\\"} | ForEach-Object {$_ -replace \\\"TPP_ADMIN\\\",\\\"${TPPAdminAccount}\\\"} | ForEach-Object {$_ -replace \\\"TPP_PASS\\\",\\\"${TPPAdminAccountPassword}\\\"} | set-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml'\""
-                                }
+                                },
+                                "waitAfterCompletion": "0"
                             },
                             "03_install-tpp": {
                                 "command": "TppConfiguration.exe -install:C:\\Users\\Administrator\\Downloads\\answerfile.xml",
                                 "cwd": "C:\\Program Files\\Venafi\\Platform",
+                                "waitAfterCompletion": "0"
+                            },
+                            "04_remove-default-IIS-server": {
+                                "command": "powershell -Command Remove-IISSite -Name 'Default Web Site' -confirm:$false",
                                 "waitAfterCompletion": "0"
                             }
                         }
@@ -896,11 +903,16 @@
                             "04_replace-answerfile": {
                                 "command": {
                                     "Fn::Sub": "powershell -Command \"(get-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml') | ForEach-Object {$_ -replace \\\"DB_URL\\\",\\\"${DBUrlEndpoint}\\\"} | ForEach-Object {$_ -replace \\\"DB_PORT\\\",\\\"${DBPort}\\\"} | ForEach-Object {$_ -replace \\\"DB_USER\\\",\\\"${DBServiceUsername}\\\"} | ForEach-Object {$_ -replace \\\"DB_PASS\\\",\\\"${DBServiceUserPassword}\\\"} | ForEach-Object {$_ -replace \\\"TPP_ADMIN\\\",\\\"${TPPAdminAccount}\\\"} | ForEach-Object {$_ -replace \\\"TPP_PASS\\\",\\\"${TPPAdminAccountPassword}\\\"} | set-content 'C:\\Users\\Administrator\\Downloads\\answerfile.xml'\""
-                                }
+                                },
+                                "waitAfterCompletion": "0"
                             },
                             "05_install-tpp": {
                                 "command": "TppConfiguration.exe -install:C:\\Users\\Administrator\\Downloads\\answerfile.xml -add",
                                 "cwd": "C:\\Program Files\\Venafi\\Platform",
+                                "waitAfterCompletion": "0"
+                            },
+                            "06_remove-default-IIS-server": {
+                                "command": "powershell -Command Remove-IISSite -Name 'Default Web Site' -confirm:$false",
                                 "waitAfterCompletion": "0"
                             }
                         }

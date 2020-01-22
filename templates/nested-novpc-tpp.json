@@ -596,7 +596,7 @@
         "DBStack": {
             "Type": "AWS::CloudFormation::Stack",
             "Properties": {
-                "TemplateURL": "https://venafi-tpp-automation.s3.amazonaws.com/beta-features/templates/msql-db-install.json",
+                "TemplateURL": "https://venafi-tpp-automation.s3.amazonaws.com/templates/msql-db-install.json",
                 "Parameters": {
                     "PrivateSubnet01ID": {
                         "Ref": "PrivateSubnet01ID"
@@ -634,7 +634,7 @@
         "TPPStack": {
             "Type": "AWS::CloudFormation::Stack",
             "Properties": {
-                "TemplateURL": "https://venafi-tpp-automation.s3.amazonaws.com/beta-features/templates/tpp-ec2-install.json",
+                "TemplateURL": "https://venafi-tpp-automation.s3.amazonaws.com/templates/tpp-ec2-install.json",
                 "Parameters": {
                     "GitHubAccount": {
                         "Ref": "GitHubAccount"
