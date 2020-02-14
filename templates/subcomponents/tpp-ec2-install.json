@@ -697,7 +697,7 @@
                             "05_ad-cs-add-addsprereqs": {
                                 "command": "powershell -File add-ADDSPrereqs.ps1",
                                 "cwd": "C:\\Users\\Administrator\\Downloads",
-                                "waitAfterCompletion": "forever"
+                                "waitAfterCompletion": "0"
                             },
                             "06_ad-cs-add-adfeatures": {
                                 "command": "powershell -File add-ADFeatures.ps1",
@@ -710,12 +710,12 @@
                                 "waitAfterCompletion": "forever"
                             },
                             "08_ad-cs-add-cert-authority": {
-                                "command": "powershell -Command Add-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools",
+                                "command": "powershell -Command Add-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools -Verbose",
                                 "waitAfterCompletion": "0"
                             },
                             "09_ad-cs-addgroup": {
                                 "command": {
-                                    "Fn::Sub": "powershell -Command Add-ADGroupMember -identity 'Domain Admins' -members \"${ADAccountUsername}\"; Add-ADGroupMember -identity 'Enterprise Admins' -members \"${ADAccountUsername}\""
+                                    "Fn::Sub": "powershell -Command Add-ADGroupMember -identity 'Domain Admins' -Members \"${ADAccountUsername}\"; Add-ADGroupMember -identity 'Enterprise Admins' -Members \"${ADAccountUsername}\""
                                 },
                                 "waitAfterCompletion": "0"
                             },
